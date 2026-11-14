@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { PageLayout } from "@/components/page-layout";
 import { getCurrentUser } from "@/lib/auth";
 import { listRecipes, listToTypeUp } from "@/lib/recipes/queries";
+import { RecipeCard } from "./recipe-card";
 
 export default function Home() {
   return (
@@ -14,7 +15,7 @@ export default function Home() {
         </Suspense>
       </div>
       <Suspense fallback={<p className="text-ink-muted">Loading recipes…</p>}>
-        <RecipeList />
+        <RecipeGrid />
       </Suspense>
     </PageLayout>
   );
@@ -46,8 +47,7 @@ async function AdminLinks() {
   );
 }
 
-// A simple list for now; the card grid comes later.
-async function RecipeList() {
+async function RecipeGrid() {
   const recipes = await listRecipes();
 
   if (recipes.length === 0) {
@@ -59,22 +59,14 @@ async function RecipeList() {
   }
 
   return (
-    <ul className="flex flex-col divide-y divide-line rounded-card border border-line bg-card">
-      {recipes.map((recipe) => (
+    <ul
+      aria-label="All recipes"
+      className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+    >
+      {recipes.map((recipe, i) => (
         <li key={recipe.id}>
-          <Link
-            href={`/recipes/${recipe.id}`}
-            className="flex min-h-tap items-center px-4 py-3 text-lg"
-          >
-            <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-              {recipe.title}
-              {recipe.status === "needs_transcribing" && (
-                <span className="text-sm text-ink-muted no-underline">
-                  Not yet typed up
-                </span>
-              )}
-            </span>
-          </Link>
+          {/* The first row is in view straight away; the rest load on scroll. */}
+          <RecipeCard recipe={recipe} eager={i < 3} />
         </li>
       ))}
     </ul>
