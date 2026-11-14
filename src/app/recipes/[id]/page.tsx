@@ -10,7 +10,9 @@ export const metadata: Metadata = { title: "Recipe · Family Cookbook" };
 export default function RecipePage({ params }: PageProps<"/recipes/[id]">) {
   return (
     <PageLayout width="form">
-      <Suspense fallback={<p className="text-ink-muted">Loading the recipe…</p>}>
+      <Suspense
+        fallback={<p className="text-ink-muted">Loading the recipe…</p>}
+      >
         <RecipeDetails params={params} />
       </Suspense>
     </PageLayout>
@@ -61,7 +63,9 @@ async function RecipeDetails({ params }: { params: Promise<{ id: string }> }) {
           <h2 id="story" className="text-2xl">
             The story
           </h2>
-          <p className="font-heading text-lg whitespace-pre-line">{recipe.story}</p>
+          <p className="font-heading text-lg whitespace-pre-line">
+            {recipe.story}
+          </p>
         </section>
       )}
     </article>
@@ -101,7 +105,10 @@ function Method({ lines }: { lines: RecipeLine[] }) {
           // biome-ignore lint/suspicious/noArrayIndexKey: static list from the saved recipe, never reordered or edited in place
           <div key={i} className="flex flex-col gap-1">
             {section.heading && <h3 className="text-lg">{section.heading}</h3>}
-            <ol start={start} className="list-decimal space-y-3 pl-7 marker:font-semibold">
+            <ol
+              start={start}
+              className="list-decimal space-y-3 pl-7 marker:font-semibold"
+            >
               {section.items.map((item, j) => (
                 // biome-ignore lint/suspicious/noArrayIndexKey: static list from the saved recipe, never reordered or edited in place
                 <li key={j} className="pl-1">

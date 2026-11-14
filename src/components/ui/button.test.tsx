@@ -5,16 +5,16 @@ import { Button } from "./button";
 describe("Button", () => {
   test("defaults to type=button so it never submits a form by accident", () => {
     render(<Button>Cancel</Button>);
-    expect(screen.getByRole("button", { name: "Cancel" }).getAttribute("type")).toBe(
-      "button",
-    );
+    expect(
+      screen.getByRole("button", { name: "Cancel" }).getAttribute("type"),
+    ).toBe("button");
   });
 
   test("can be a submit button", () => {
     render(<Button type="submit">Save</Button>);
-    expect(screen.getByRole("button", { name: "Save" }).getAttribute("type")).toBe(
-      "submit",
-    );
+    expect(
+      screen.getByRole("button", { name: "Save" }).getAttribute("type"),
+    ).toBe("submit");
   });
 
   test.each(["primary", "secondary", "quiet"] as const)(

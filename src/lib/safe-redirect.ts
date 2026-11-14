@@ -4,7 +4,11 @@
  */
 export function safeRedirectPath(next: unknown): string {
   if (typeof next !== "string") return "/";
-  if (!next.startsWith("/") || next.startsWith("//") || next.startsWith("/\\")) {
+  if (
+    !next.startsWith("/") ||
+    next.startsWith("//") ||
+    next.startsWith("/\\")
+  ) {
     return "/";
   }
   if (next.startsWith("/sign-in")) return "/";

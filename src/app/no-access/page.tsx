@@ -11,8 +11,8 @@ export default function NoAccessPage() {
       <h1 className="text-3xl">No access</h1>
       <p className="text-lg">
         You&apos;re signed in, but this account doesn&apos;t have access to the
-        family cookbook. Please ask whoever invited you to check that your
-        email is on the family list.
+        family cookbook. Please ask whoever invited you to check that your email
+        is on the family list.
       </p>
       <form action={signOut}>
         <Button type="submit" fullWidth>

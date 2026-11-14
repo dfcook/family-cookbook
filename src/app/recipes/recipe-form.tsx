@@ -7,7 +7,10 @@ import { FormError, TextAreaField, TextField } from "@/components/ui/fields";
 import type { RecipeFormState, RecipeFormValues } from "./actions";
 
 type RecipeFormProps = {
-  action: (state: RecipeFormState, formData: FormData) => Promise<RecipeFormState>;
+  action: (
+    state: RecipeFormState,
+    formData: FormData,
+  ) => Promise<RecipeFormState>;
   initialValues?: RecipeFormValues;
   submitLabel: string;
   cancelHref: string;

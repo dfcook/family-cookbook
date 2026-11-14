@@ -1,9 +1,9 @@
-import { type Page, expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 import {
   allowEmail,
   anonymousClient,
-  signIn,
   signedInClient,
+  signIn,
   uniqueEmail,
 } from "./support/auth";
 
@@ -26,12 +26,16 @@ test("an admin adds a typed-up recipe and it reads in cooking order", async ({
 
   await page.getByRole("link", { name: "Add a recipe" }).click();
   await page.getByLabel("Recipe name").fill(title);
-  await page.getByLabel("Ingredients").fill(
-    "For the pastry:\n200g plain flour\n100g butter\n\nFor the filling:\n4 Bramley apples\n",
-  );
-  await page.getByLabel("Method").fill(
-    "Pastry:\nRub the butter into the flour\nChill for 30 minutes\nFilling:\nPeel and slice the apples\nBake: 40 minutes at 180C",
-  );
+  await page
+    .getByLabel("Ingredients")
+    .fill(
+      "For the pastry:\n200g plain flour\n100g butter\n\nFor the filling:\n4 Bramley apples\n",
+    );
+  await page
+    .getByLabel("Method")
+    .fill(
+      "Pastry:\nRub the butter into the flour\nChill for 30 minutes\nFilling:\nPeel and slice the apples\nBake: 40 minutes at 180C",
+    );
   await page.getByLabel("Notes").fill("Mum used half the sugar.");
   await page.getByLabel("The story").fill("Made every Sunday in the 1960s.");
   await page.getByRole("button", { name: "Save recipe" }).click();
@@ -44,8 +48,12 @@ test("an admin adds a typed-up recipe and it reads in cooking order", async ({
   expect(headings).toEqual(["Ingredients", "Method", "Notes", "The story"]);
 
   // Ingredient sections keep their headings and items.
-  await expect(page.getByRole("heading", { name: "For the pastry" })).toBeVisible();
-  await expect(page.getByRole("listitem").filter({ hasText: "4 Bramley apples" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "For the pastry" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("listitem").filter({ hasText: "4 Bramley apples" }),
+  ).toBeVisible();
 
   // Method steps are numbered straight through both sections; a colon in the
   // middle of a line stays part of the step.
@@ -72,7 +80,9 @@ test("empty sections are left out", async ({ page }) => {
   await page.getByRole("button", { name: "Save recipe" }).click();
 
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(title);
-  expect(await page.locator("article h2").allTextContents()).toEqual(["Method"]);
+  expect(await page.locator("article h2").allTextContents()).toEqual([
+    "Method",
+  ]);
 });
 
 test("a recipe needs a name", async ({ page }) => {
@@ -115,7 +125,9 @@ test("a reader can read a recipe but sees no way to add or change one", async ({
 
   // Pages stream, so "not found" shows as a page rather than a 404 status.
   await page.goto("/recipes/new");
-  await expect(page.getByRole("heading", { name: "We couldn't find that page" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "We couldn't find that page" }),
+  ).toBeVisible();
   await expect(page.getByLabel("Recipe name")).toHaveCount(0);
 });
 
@@ -124,20 +136,29 @@ test("row-level security: readers can't add recipes and signed-out visitors can'
   await allowEmail(readerEmail, "reader");
   const reader = await signedInClient(readerEmail);
 
-  const { error } = await reader.from("recipes").insert({ title: "Sneaky recipe" });
+  const { error } = await reader
+    .from("recipes")
+    .insert({ title: "Sneaky recipe" });
   expect(error?.code).toBe("42501"); // insufficient privilege: blocked by RLS
 
-  const { data: readable, error: readError } = await reader.from("recipes").select("id");
+  const { data: readable, error: readError } = await reader
+    .from("recipes")
+    .select("id");
   expect(readError).toBeNull();
   expect(Array.isArray(readable)).toBe(true);
 
-  const { data: anonymous } = await anonymousClient().from("recipes").select("id");
+  const { data: anonymous } = await anonymousClient()
+    .from("recipes")
+    .select("id");
   expect(anonymous).toEqual([]);
 });
 
 test("an unknown recipe address shows not found", async ({ page }) => {
   await signInAs(page, "reader");
-  for (const path of ["/recipes/00000000-0000-0000-0000-000000000000", "/recipes/not-a-recipe"]) {
+  for (const path of [
+    "/recipes/00000000-0000-0000-0000-000000000000",
+    "/recipes/not-a-recipe",
+  ]) {
     await page.goto(path);
     await expect(
       page.getByRole("heading", { name: "We couldn't find that page" }),

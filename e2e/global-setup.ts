@@ -33,8 +33,8 @@ export default async function globalSetup() {
 }
 
 async function messageText(id: string): Promise<string> {
-  const message = await fetch(`${process.env.MAILPIT_URL}/api/v1/message/${id}`).then(
-    (r) => r.json() as Promise<{ Text: string }>,
-  );
+  const message = await fetch(
+    `${process.env.MAILPIT_URL}/api/v1/message/${id}`,
+  ).then((r) => r.json() as Promise<{ Text: string }>);
   return message.Text;
 }

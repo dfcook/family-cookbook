@@ -19,15 +19,21 @@ export function SignInForm() {
   );
 }
 
-function SignInSteps({ next, onRestart }: { next: string; onRestart: () => void }) {
-  const [emailState, sendAction, sending] = useActionState<SignInState, FormData>(
-    sendCode,
-    { step: "email" },
-  );
-  const [codeState, verifyAction, verifying] = useActionState<SignInState, FormData>(
-    verifyCode,
-    { step: "email" },
-  );
+function SignInSteps({
+  next,
+  onRestart,
+}: {
+  next: string;
+  onRestart: () => void;
+}) {
+  const [emailState, sendAction, sending] = useActionState<
+    SignInState,
+    FormData
+  >(sendCode, { step: "email" });
+  const [codeState, verifyAction, verifying] = useActionState<
+    SignInState,
+    FormData
+  >(verifyCode, { step: "email" });
 
   if (emailState.step === "email") {
     return (
