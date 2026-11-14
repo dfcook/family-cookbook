@@ -66,7 +66,8 @@ export async function getSignInCode(email: string): Promise<string> {
     )
     .toBeTruthy();
 
-  return code!;
+  if (!code) throw new Error(`No sign-in code found for ${email}`);
+  return code;
 }
 
 export async function countEmailsTo(email: string): Promise<number> {

@@ -52,7 +52,8 @@ Migrations merged to `main` are applied to the hosted project by the **Deploy da
 ## Tests
 
 ```sh
-pnpm lint
+pnpm lint        # Biome: lint and formatting check
+pnpm format      # Biome: apply fixes and format
 pnpm typecheck
 pnpm test        # Vitest unit tests
 pnpm test:e2e    # Playwright, desktop and phone viewports (starts the dev server)

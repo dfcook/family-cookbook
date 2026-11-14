@@ -1,5 +1,9 @@
-import { createClient } from "@supabase/supabase-js";
-import { allowEmail, emailsTo, uniqueEmail } from "./support/auth";
+import {
+  allowEmail,
+  anonymousClient,
+  emailsTo,
+  uniqueEmail,
+} from "./support/auth";
 
 /**
  * On a freshly started local Supabase, the auth service can send its first
@@ -8,11 +12,7 @@ import { allowEmail, emailsTo, uniqueEmail } from "./support/auth";
  * test sees the default template.
  */
 export default async function globalSetup() {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-    { auth: { persistSession: false } },
-  );
+  const supabase = anonymousClient();
   const deadline = Date.now() + 60_000;
 
   while (Date.now() < deadline) {

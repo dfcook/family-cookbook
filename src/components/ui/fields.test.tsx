@@ -18,7 +18,7 @@ describe("TextField", () => {
     );
     const input = screen.getByLabelText("Sign-in code");
     expect(input.getAttribute("aria-invalid")).toBe("true");
-    const describedBy = input.getAttribute("aria-describedby")!.split(" ");
+    const describedBy = (input.getAttribute("aria-describedby") ?? "").split(" ");
     const descriptions = describedBy.map((id) => document.getElementById(id)?.textContent);
     expect(descriptions).toEqual(["Check your email", "That code didn't work"]);
     expect(screen.getByRole("alert").textContent).toBe("That code didn't work");
