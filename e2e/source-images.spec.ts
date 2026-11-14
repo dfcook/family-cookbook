@@ -83,7 +83,7 @@ test("an admin adds a photo of the card and it shows on the recipe", async ({
     .poll(() => image.evaluate((img: HTMLImageElement) => img.naturalWidth))
     .toBe(1600);
 
-  // Three versions are stored; the original keeps full resolution.
+  // Three versions are stored; a photo under 2560px keeps its own size.
   const [stored] = await storedImages(recipeId);
   expect(stored).toMatchObject({ width: 2400, height: 1800, sortOrder: 0 });
   expect(await storedFiles(recipeId)).toEqual([
@@ -241,4 +241,46 @@ test("storage security: images are private and only admins can upload", async ()
   expect((await fetch(publicLink.publicUrl)).ok).toBe(false);
   const { data: listing } = await anonymous.list("recipes");
   expect(listing ?? []).toEqual([]);
+});
+
+test("a full-size 12-megapixel phone photo uploads", async ({ page }) => {
+  await signInAs(page, "admin");
+  const recipeId = await addRecipe(page, uniqueTitle("Big photo"));
+
+  // Make a 4032x3024 JPEG in the browser. Noise compresses badly, like a real
+  // photo, so this is several megabytes: the size that broke uploads from
+  // phones when the image was sent through a server action.
+  const base64 = await page.evaluate(async () => {
+    const canvas = new OffscreenCanvas(4032, 3024);
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("no canvas");
+    const pixels = context.createImageData(4032, 3024);
+    for (let i = 0; i < pixels.data.length; i++) {
+      pixels.data[i] = i % 4 === 3 ? 255 : Math.random() * 256;
+    }
+    context.putImageData(pixels, 0, 0);
+    const blob = await canvas.convertToBlob({
+      type: "image/jpeg",
+      quality: 0.92,
+    });
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    let binary = "";
+    for (const byte of bytes) binary += String.fromCharCode(byte);
+    return btoa(binary);
+  });
+  const buffer = Buffer.from(base64, "base64");
+  expect(buffer.length).toBeGreaterThan(3_000_000);
+
+  await page.getByLabel("Choose photos").setInputFiles({
+    name: "IMG_0042.jpg",
+    mimeType: "image/jpeg",
+    buffer,
+  });
+  const uploads = page.getByRole("list", { name: "Photo uploads" });
+  await expect(uploads.getByText("Added", { exact: true })).toBeVisible({
+    timeout: 60_000,
+  });
+  // The preservation copy is scaled to 2560px to keep storage costs down.
+  const [stored] = await storedImages(recipeId);
+  expect(stored).toMatchObject({ width: 2560, height: 1920 });
 });

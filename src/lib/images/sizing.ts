@@ -1,7 +1,9 @@
 /**
- * Every photo of an original card is saved in three sizes. The original is
- * kept as large as browsers can safely handle, because it is the thing being
- * preserved; the others are for showing on screen.
+ * Every photo of an original card is saved in three sizes. The "original" is
+ * the preservation copy: 2560px on the long edge keeps handwriting sharp
+ * (about 500 pixels per inch for a card that fills the frame) at around a
+ * fifth of the size of a full 12 MP phone photo, so the collection fits in
+ * free storage tiers. The others are for showing on screen.
  */
 export type Variant = "original" | "display" | "thumb";
 
@@ -15,11 +17,7 @@ export type VariantSpec = {
 };
 
 export const VARIANTS: Record<Variant, VariantSpec> = {
-  original: {
-    maxEdge: Number.POSITIVE_INFINITY,
-    maxPixels: 16_000_000,
-    quality: 0.9,
-  },
+  original: { maxEdge: 2560, maxPixels: 16_000_000, quality: 0.85 },
   display: { maxEdge: 1600, maxPixels: 16_000_000, quality: 0.85 },
   thumb: { maxEdge: 400, maxPixels: 16_000_000, quality: 0.8 },
 };

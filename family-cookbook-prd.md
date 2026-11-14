@@ -79,7 +79,7 @@ A warm, simple, private home for a family's recipes that feels like a cherished 
 **Sharing and preserving**
 
 - As a curator, I can print a recipe or save it as a PDF to give copies to relatives.
-- As a curator, I know the whole collection, including full-resolution originals, is backed up every night.
+- As a curator, I know the whole collection, including the preservation copies of the original cards, is backed up every night.
 - As a curator, I can give specific family members read access so that only family can see the collection.
 
 ---
@@ -200,17 +200,17 @@ Measurements are kept as free text exactly as written in the original. They are 
 
 ## 6. Non-Functional Requirements
 
-| Area                       | Requirement                                                                                                                                                                    |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Usability**              | A reader can find and follow a recipe on a phone without help. The curator can quick-capture a recipe in under a minute. Large tap targets and readable fonts for older users. |
-| **Responsive design**      | Fully usable on phone, tablet and desktop. Phone and tablet are the priority, for cooking and for photographing source cards.                                                  |
-| **Accessibility**          | Meets WCAG 2.1 AA: sufficient colour contrast, keyboard navigation, alt text for images.                                                                                       |
-| **Performance**            | Pages load in under 2 seconds on a typical connection. The grid uses thumbnails and the detail page uses display-size images.                                                  |
-| **Privacy**                | Not publicly indexed. Only allowlisted users can view content. Images are kept in a private bucket and served only through short-lived signed URLs.                            |
-| **Reliability and backup** | Nightly off-site backups of the database and images, with a tested restore procedure. The backup job also stops the free-tier project pausing from inactivity.                 |
-| **Preservation**           | Every source image keeps a full-resolution original (high-quality JPEG; HEIC converted).                                                                                       |
-| **Maintainability**        | TypeScript, schema managed through migrations, CI on every push, clean README.                                                                                                 |
-| **Cost**                   | Supabase free tier, Vercel hobby tier, Cloudflare R2 free tier. Upgrade to Supabase Pro only if storage or usage outgrows the free tier.                                       |
+| Area                       | Requirement                                                                                                                                                                                      |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Usability**              | A reader can find and follow a recipe on a phone without help. The curator can quick-capture a recipe in under a minute. Large tap targets and readable fonts for older users.                   |
+| **Responsive design**      | Fully usable on phone, tablet and desktop. Phone and tablet are the priority, for cooking and for photographing source cards.                                                                    |
+| **Accessibility**          | Meets WCAG 2.1 AA: sufficient colour contrast, keyboard navigation, alt text for images.                                                                                                         |
+| **Performance**            | Pages load in under 2 seconds on a typical connection. The grid uses thumbnails and the detail page uses display-size images.                                                                    |
+| **Privacy**                | Not publicly indexed. Only allowlisted users can view content. Images are kept in a private bucket and served only through short-lived signed URLs.                                              |
+| **Reliability and backup** | Nightly off-site backups of the database and images, with a tested restore procedure. The backup job also stops the free-tier project pausing from inactivity.                                   |
+| **Preservation**           | Every source image keeps a preservation copy at up to 2560px on the long edge (JPEG quality 0.85; HEIC converted). Sharp enough to read and print the card, small enough for free storage tiers. |
+| **Maintainability**        | TypeScript, schema managed through migrations, CI on every push, clean README.                                                                                                                   |
+| **Cost**                   | Supabase free tier, Vercel hobby tier, Cloudflare R2 free tier. Upgrade to Supabase Pro only if storage or usage outgrows the free tier.                                                         |
 
 ---
 
@@ -218,7 +218,7 @@ Measurements are kept as free text exactly as written in the original. They are 
 
 - **Front end:** Next.js (App Router), TypeScript, Tailwind CSS.
 - **Back end:** Supabase: Postgres, Auth (email one-time code), Storage, row-level security.
-- **Image handling:** Resized in the browser before upload into three versions: original (full resolution, JPEG quality ~90), display (~1600px), thumbnail (~400px). Stored in a private bucket and served through signed URLs that the server creates. (Supabase image transformations are not available on the free tier.)
+- **Image handling:** Resized in the browser before upload into three versions: original (up to 2560px, JPEG quality 0.85, about 1 MB per card with the other versions), display (~1600px), thumbnail (~400px). Stored in a private bucket and served through signed URLs that the server creates. (Supabase image transformations are not available on the free tier.)
 - **Search:** Postgres full-text search on a generated, weighted `tsvector`.
 - **Hosting:** Vercel (app, with preview deploys) and Supabase.
 - **Backups:** Nightly GitHub Action: `pg_dump` plus a storage sync to Cloudflare R2, with retention rotation.
@@ -264,7 +264,7 @@ Full-size image viewer (R16), extra fields (R9), contributor role, "show who add
 
 **Personal**
 
-- The entire physical binder has been captured, with full-resolution originals backed up off-site.
+- The entire physical binder has been captured, with preservation copies backed up off-site.
 - Most captured recipes have been transcribed.
 - At least two other family members have signed in and used the app.
 - A relative can find and cook a recipe from their phone or tablet without help.
@@ -282,7 +282,7 @@ Full-size image viewer (R16), extra fields (R9), contributor role, "show who add
 | Risk                                                     | Mitigation                                                                                                                             |
 | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | Entering every recipe is tedious, so the project stalls. | Quick capture (title and photo only) with a "to type up" queue; fast line-per-item text entry.                                         |
-| Poor quality photos of old, stained cards.               | Simple photo tips; multiple images per recipe; full-resolution originals kept.                                                         |
+| Poor quality photos of old, stained cards.               | Simple photo tips; multiple images per recipe; 2560px preservation copies kept.                                                        |
 | Family members find sign-in confusing.                   | Email one-time code instead of magic links; long-lived sessions; installable home-screen icon; test with the least technical relative. |
 | Losing the data.                                         | Soft delete; nightly off-site backups; a documented, tested restore.                                                                   |
 | Free-tier project pauses or runs out of storage.         | Nightly backup job keeps the project active; originals stored as quality-90 JPEG; upgrade to Pro if needed.                            |

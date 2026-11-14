@@ -51,8 +51,8 @@ jobs:
             echo "MAILPIT_URL=$(jq -r .MAILPIT_URL <<<"$status")"
           } >> "$GITHUB_ENV"
 
-      - name: Install Playwright browser
-        run: pnpm exec playwright install --with-deps chromium
+      - name: Install Playwright browsers (Chrome, and WebKit for iPhone)
+        run: pnpm exec playwright install --with-deps chromium webkit
 
       - run: pnpm build
       - run: pnpm test:e2e
