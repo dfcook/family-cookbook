@@ -58,7 +58,7 @@ function SignInSteps({ next, onRestart }: { next: string; onRestart: () => void 
       <p className="text-lg" role="status">
         {emailState.resent ? "We've sent a new code. " : ""}
         If <strong>{email}</strong> is on the family list, we&apos;ve emailed it
-        a 6-digit code. It can take a minute to arrive.
+        a sign-in code. It can take a minute to arrive.
       </p>
 
       <form action={verifyAction} className="flex flex-col gap-4">
@@ -72,8 +72,8 @@ function SignInSteps({ next, onRestart }: { next: string; onRestart: () => void 
           name="code"
           inputMode="numeric"
           autoComplete="one-time-code"
-          pattern="[0-9 ]*"
-          maxLength={7}
+          pattern="[0-9 \-]*"
+          maxLength={14}
           required
           autoFocus
           className={`${inputClass} tracking-[0.4em]`}
