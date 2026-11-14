@@ -1,0 +1,99 @@
+name: Restore check
+
+# Proves the backups can actually be restored: downloads the latest backup
+# from R2, restores it into a fresh Supabase on the runner, checks the counts
+# and every image file, then signs in to the app and opens a recipe's photo.
+#
+# The data is the family's real collection and this repository's logs are
+# public, so the steps print counts only and nothing is uploaded as an
+# artifact. The runner is deleted when the job ends.
+
+on:
+  schedule:
+    - cron: "17 4 3 * *" # 04:17 UTC on the 3rd of every month
+  workflow_dispatch:
+
+concurrency:
+  group: restore-check
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  restore:
+    if: vars.R2_BUCKET != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      RCLONE_CONFIG_R2_TYPE: s3
+      RCLONE_CONFIG_R2_PROVIDER: Cloudflare
+      RCLONE_CONFIG_R2_ENDPOINT: https://${{ vars.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+      RCLONE_CONFIG_R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      RCLONE_CONFIG_R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      RCLONE_CONFIG_R2_NO_CHECK_BUCKET: "true"
+      BACKUP_BUCKET: r2:${{ vars.R2_BUCKET }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # to use the migrations from the backup's commit
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      # Same pinned rclone as the backup workflow. (Not named RCLONE_*:
+      # rclone reads those as flags.)
+      - name: Install rclone
+        env:
+          RCLONE_RELEASE: v1.69.1
+          RCLONE_RELEASE_SHA256: 231841f8d8029ae6cfca932b601b3b50d0e2c3c2cb9da3166293f1c3eae7d79c
+        run: |
+          zip="rclone-$RCLONE_RELEASE-linux-amd64.zip"
+          curl -fsSLO "https://downloads.rclone.org/$RCLONE_RELEASE/$zip"
+          echo "$RCLONE_RELEASE_SHA256  $zip" | sha256sum --check
+          unzip -q "$zip"
+          sudo install "rclone-$RCLONE_RELEASE-linux-amd64/rclone" /usr/local/bin/rclone
+
+      - name: Download the latest backup
+        run: |
+          day=$(rclone lsf --dirs-only "$BACKUP_BUCKET/db" | sed 's#/$##' | sort | tail -n 1)
+          echo "Latest backup: $day"
+          echo "BACKUP_DAY=$day" >> "$GITHUB_ENV"
+          rclone copy "$BACKUP_BUCKET/db/$day" "restore/db/$day" --log-level ERROR
+          rclone copy "$BACKUP_BUCKET/images" restore/images --log-level ERROR
+
+      - name: Use the migrations from the backup's commit
+        run: |
+          commit=$(jq -r .commit "restore/db/$BACKUP_DAY/manifest.json")
+          echo "Backup made from commit $commit"
+          rm -rf supabase/migrations
+          git checkout "$commit" -- supabase/migrations
+
+      - name: Start a fresh local Supabase
+        run: pnpm db:start
+
+      - name: Restore the backup
+        run: scripts/backup/restore-local.sh restore "$BACKUP_DAY" --yes
+
+      - name: Check counts and every image file
+        run: scripts/backup/verify-restore.sh restore "$BACKUP_DAY"
+
+      - name: Export local Supabase settings for the app
+        run: |
+          status=$(pnpm exec supabase status -o json)
+          {
+            echo "NEXT_PUBLIC_SUPABASE_URL=$(jq -r .API_URL <<<"$status")"
+            echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$(jq -r .PUBLISHABLE_KEY <<<"$status")"
+            echo "SUPABASE_SECRET_KEY=$(jq -r .SECRET_KEY <<<"$status")"
+            echo "MAILPIT_URL=$(jq -r .MAILPIT_URL <<<"$status")"
+          } >> "$GITHUB_ENV"
+
+      - name: Check the restored collection in the app
+        run: |
+          git checkout HEAD -- supabase/migrations
+          pnpm exec playwright install --with-deps chromium
+          pnpm build
+          pnpm exec playwright test --config playwright.restore.config.ts
