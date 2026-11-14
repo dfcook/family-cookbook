@@ -1,13 +1,14 @@
 import type { ComponentProps } from "react";
 import { cx } from "./class-names";
 
-type Variant = "primary" | "secondary" | "quiet";
+type Variant = "primary" | "secondary" | "danger" | "quiet";
 
 const variants: Record<Variant, string> = {
   primary:
     "bg-accent text-on-accent font-semibold hover:bg-accent-strong active:bg-accent-strong",
   secondary:
     "border-2 border-ink bg-card text-ink font-semibold hover:bg-paper",
+  danger: "bg-danger text-on-accent font-semibold hover:bg-ink active:bg-ink",
   quiet:
     "-mx-1 px-1 text-accent underline underline-offset-4 hover:text-accent-strong",
 };

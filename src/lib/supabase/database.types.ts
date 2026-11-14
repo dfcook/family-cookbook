@@ -99,14 +99,14 @@ isOneToOne: false
                   ]
                 },"recipes": {
                   Row: {
-                    "created_at": string,"created_by": string,"id": string,"ingredients": NonNullable<Json>,"method": NonNullable<Json>,"notes": string | null,"status": Database["public"]['Enums']["recipe_status"],"story": string | null,"title": string,"updated_at": string
+                    "created_at": string,"created_by": string,"deleted_at": string | null,"id": string,"ingredients": NonNullable<Json>,"method": NonNullable<Json>,"notes": string | null,"status": Database["public"]['Enums']["recipe_status"],"story": string | null,"title": string,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"created_by"?: string,"id"?: string,"ingredients"?: NonNullable<Json>,"method"?: NonNullable<Json>,"notes"?: string | null,"status"?: Database["public"]['Enums']["recipe_status"],"story"?: string | null,"title": string,"updated_at"?: string
+                    "created_at"?: string,"created_by"?: string,"deleted_at"?: string | null,"id"?: string,"ingredients"?: NonNullable<Json>,"method"?: NonNullable<Json>,"notes"?: string | null,"status"?: Database["public"]['Enums']["recipe_status"],"story"?: string | null,"title": string,"updated_at"?: string
                   }
                   Update: {
-                    "created_at"?: string,"created_by"?: string,"id"?: string,"ingredients"?: NonNullable<Json>,"method"?: NonNullable<Json>,"notes"?: string | null,"status"?: Database["public"]['Enums']["recipe_status"],"story"?: string | null,"title"?: string,"updated_at"?: string
+                    "created_at"?: string,"created_by"?: string,"deleted_at"?: string | null,"id"?: string,"ingredients"?: NonNullable<Json>,"method"?: NonNullable<Json>,"notes"?: string | null,"status"?: Database["public"]['Enums']["recipe_status"],"story"?: string | null,"title"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -137,6 +137,9 @@ isOneToOne: false
                            },
 "recipe_image_path":
 { Args: { "image_id": string,"recipe_id": string,"variant": string }; Returns: string
+                           },
+"try_uuid":
+{ Args: { "value": string }; Returns: string
                            }
           }
           Enums: {

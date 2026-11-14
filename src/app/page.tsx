@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { PageLayout } from "@/components/page-layout";
 import { getCurrentUser } from "@/lib/auth";
-import { listRecipes, listToTypeUp } from "@/lib/recipes/queries";
+import { listRecipes, listToTypeUp, listTrash } from "@/lib/recipes/queries";
 import { RecipeCard } from "./recipe-card";
 
 export default function Home() {
@@ -29,7 +29,10 @@ const secondaryLink =
 async function AdminLinks() {
   const user = await getCurrentUser();
   if (user.role !== "admin") return null;
-  const toTypeUp = (await listToTypeUp()).length;
+  const [toTypeUp, inTrash] = await Promise.all([
+    listToTypeUp().then((recipes) => recipes.length),
+    listTrash().then((recipes) => recipes.length),
+  ]);
   return (
     <nav aria-label="Add recipes" className="flex flex-wrap gap-3">
       <Link href="/recipes/capture" className={primaryLink}>
@@ -41,6 +44,11 @@ async function AdminLinks() {
       {toTypeUp > 0 && (
         <Link href="/recipes/to-type-up" className={secondaryLink}>
           To type up ({toTypeUp})
+        </Link>
+      )}
+      {inTrash > 0 && (
+        <Link href="/recipes/trash" className={secondaryLink}>
+          Trash ({inTrash})
         </Link>
       )}
     </nav>

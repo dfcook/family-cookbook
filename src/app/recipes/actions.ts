@@ -136,6 +136,7 @@ export async function updateRecipe(
       story: values.story || null,
     })
     .eq("id", recipeId)
+    .is("deleted_at", null)
     .select("id");
 
   if (error || !data?.length) {
@@ -187,4 +188,60 @@ export async function createQuickCapture(
   }
   refreshRecipePages();
   return { ok: true, recipeId: data.id };
+}
+
+export type TrashActionState = { error?: string };
+
+/** Moves a recipe to the trash. Nothing is removed; it can be restored. */
+export async function trashRecipe(
+  recipeId: string,
+  _prev: TrashActionState,
+  _formData: FormData,
+): Promise<TrashActionState> {
+  await requireAdmin();
+  if (!UUID.test(recipeId)) return { error: "This recipe no longer exists." };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("recipes")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", recipeId)
+    .is("deleted_at", null)
+    .select("id");
+  if (error || !data?.length) {
+    console.error("trashRecipe failed", error?.code, error?.message);
+    return {
+      error: "Sorry, the recipe couldn't be deleted. Please try again.",
+    };
+  }
+
+  refreshRecipePages();
+  redirect("/recipes/trash");
+}
+
+/** Brings a recipe back from the trash, exactly as it was. */
+export async function restoreRecipe(
+  recipeId: string,
+  _prev: TrashActionState,
+  _formData: FormData,
+): Promise<TrashActionState> {
+  await requireAdmin();
+  if (!UUID.test(recipeId)) return { error: "This recipe no longer exists." };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("recipes")
+    .update({ deleted_at: null })
+    .eq("id", recipeId)
+    .not("deleted_at", "is", null)
+    .select("id");
+  if (error || !data?.length) {
+    console.error("restoreRecipe failed", error?.code, error?.message);
+    return {
+      error: "Sorry, the recipe couldn't be restored. Please try again.",
+    };
+  }
+
+  refreshRecipePages();
+  redirect(`/recipes/${recipeId}`);
 }

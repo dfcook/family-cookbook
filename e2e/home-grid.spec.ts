@@ -1,26 +1,13 @@
-import { join } from "node:path";
 import { expect, type Page, test } from "@playwright/test";
-import { addRecipe, signInAs, uniqueTitle } from "./support/recipes";
+import {
+  addRecipe,
+  quickCapture,
+  signInAs,
+  uniqueTitle,
+} from "./support/recipes";
 
 // The home grid is long-lived data shared by every test, so these find their
 // own recipes by unique titles rather than counting cards.
-
-const fixture = (name: string) => join(__dirname, "fixtures", name);
-
-async function quickCapture(page: Page, title: string) {
-  await page.goto("/recipes/capture");
-  await page.getByRole("textbox", { name: "Recipe name" }).fill(title);
-  await page
-    .getByLabel("Choose photos")
-    .setInputFiles([
-      fixture("recipe-card.jpg"),
-      fixture("recipe-card-rotated.jpg"),
-    ]);
-  await page.getByRole("button", { name: "Save", exact: true }).click();
-  await expect(page.getByRole("status")).toContainText("is saved", {
-    timeout: 30_000,
-  });
-}
 
 const grid = (page: Page) => page.getByRole("list", { name: "All recipes" });
 

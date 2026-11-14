@@ -6,7 +6,9 @@ import { asRecipeLines } from "./lines";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // Every read goes through the signed-in user's Supabase client, so row-level
-// security decides what they can see.
+// security decides what they can see. Readers never see recipes in the
+// trash; admins can (for the trash page), so every query here that isn't
+// about the trash filters them out with `.is("deleted_at", null)`.
 
 /**
  * Every recipe for the home grid, by title, each with a short-lived link to
@@ -17,6 +19,7 @@ export async function listRecipes() {
   const { data, error } = await supabase
     .from("recipes")
     .select("id, title, status, recipe_source_images (images (thumb_path))")
+    .is("deleted_at", null)
     // Only the first photo of the original is needed for the card.
     .order("sort_order", {
       referencedTable: "recipe_source_images",
@@ -70,6 +73,7 @@ export async function listToTypeUp() {
     .from("recipes")
     .select("id, title, created_at, recipe_source_images (count)")
     .eq("status", "needs_transcribing")
+    .is("deleted_at", null)
     .order("created_at", { ascending: true });
   if (error) throw error;
   return data.map((recipe) => ({
@@ -88,6 +92,7 @@ export async function getRecipe(id: string) {
     .from("recipes")
     .select("id, title, status, ingredients, method, notes, story, updated_at")
     .eq("id", id)
+    .is("deleted_at", null)
     .maybeSingle();
   if (error) throw error;
   if (!data) return null;
@@ -140,6 +145,22 @@ async function getSourceImages(recipeId: string) {
         ]
       : [];
   });
+}
+
+/** Recipes in the trash, most recently deleted first. Admins only. */
+export async function listTrash() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("recipes")
+    .select("id, title, deleted_at")
+    .not("deleted_at", "is", null)
+    .order("deleted_at", { ascending: false });
+  if (error) throw error;
+  return data.map((recipe) => ({
+    id: recipe.id,
+    title: recipe.title,
+    deletedAt: recipe.deleted_at as string,
+  }));
 }
 
 export type Recipe = NonNullable<Awaited<ReturnType<typeof getRecipe>>>;

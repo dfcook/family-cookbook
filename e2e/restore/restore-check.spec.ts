@@ -12,13 +12,16 @@ test("the restored collection shows in the app, with its photos", async ({
 
   const { count: recipeCount, error } = await db
     .from("recipes")
-    .select("id", { count: "exact", head: true });
+    .select("id", { count: "exact", head: true })
+    // Recipes in the trash are restored too, but not shown.
+    .is("deleted_at", null);
   if (error) throw new Error("Couldn't count restored recipes");
   expect(recipeCount ?? 0, "restored recipes").toBeGreaterThan(0);
 
   const { data: withPhoto } = await db
     .from("recipe_source_images")
-    .select("recipe_id")
+    .select("recipe_id, recipes!inner (deleted_at)")
+    .is("recipes.deleted_at", null)
     .limit(1)
     .maybeSingle();
   expect(withPhoto !== null, "a restored recipe has a photo").toBe(true);
