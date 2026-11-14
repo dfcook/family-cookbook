@@ -49,8 +49,20 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Ubuntu's packaged rclone (1.60) is too old for R2: its first upload
+      # attempt fails with 501 NotImplemented. Pin a current release and check
+      # its published checksum. (Not named RCLONE_*: rclone reads those as flags.)
       - name: Install rclone
-        run: sudo apt-get update -q && sudo apt-get install -y -q rclone
+        env:
+          RCLONE_RELEASE: v1.69.1
+          RCLONE_RELEASE_SHA256: 231841f8d8029ae6cfca932b601b3b50d0e2c3c2cb9da3166293f1c3eae7d79c
+        run: |
+          zip="rclone-$RCLONE_RELEASE-linux-amd64.zip"
+          curl -fsSLO "https://downloads.rclone.org/$RCLONE_RELEASE/$zip"
+          echo "$RCLONE_RELEASE_SHA256  $zip" | sha256sum --check
+          unzip -q "$zip"
+          sudo install "rclone-$RCLONE_RELEASE-linux-amd64/rclone" /usr/local/bin/rclone
+          rclone version
 
       - name: Back up the database and images
         run: scripts/backup/backup.sh
