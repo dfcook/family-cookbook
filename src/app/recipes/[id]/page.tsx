@@ -6,6 +6,7 @@ import { PageLayout } from "@/components/page-layout";
 import { getCurrentUser } from "@/lib/auth";
 import { type RecipeLine, toSections } from "@/lib/recipes/lines";
 import { getRecipe, type Recipe } from "@/lib/recipes/queries";
+import { DeleteRecipe } from "./delete-recipe";
 import { SourceImageUploader } from "./source-image-uploader";
 import { TheOriginal } from "./the-original";
 
@@ -13,7 +14,7 @@ export const metadata: Metadata = { title: "Recipe · Family Cookbook" };
 
 export default function RecipePage({ params }: PageProps<"/recipes/[id]">) {
   return (
-    <PageLayout width="form">
+    <PageLayout>
       <Suspense
         fallback={<p className="text-ink-muted">Loading the recipe…</p>}
       >
@@ -33,25 +34,63 @@ async function RecipeDetails({ params }: { params: Promise<{ id: string }> }) {
       <RecipeArticle recipe={recipe} />
       {/* Tools for changing the recipe sit outside the recipe itself. */}
       <Suspense>
-        <AdminTools recipeId={recipe.id} />
+        <AdminTools recipe={recipe} />
       </Suspense>
     </>
   );
 }
 
 function RecipeArticle({ recipe }: { recipe: Recipe }) {
-  // Saved by quick capture: the card itself is the recipe for now, so show it
-  // first and big.
-  const untranscribed = recipe.status === "needs_transcribing";
+  const title = (
+    <div className="flex flex-col gap-3">
+      <h1 className="text-4xl">{recipe.title}</h1>
+      {recipe.status === "needs_transcribing" && <NotYetTypedUp />}
+    </div>
+  );
+
+  // Saved by quick capture: the card itself is the recipe for now, so show
+  // it first and big.
+  if (recipe.status === "needs_transcribing") {
+    return (
+      <article className="flex flex-col gap-8">
+        {title}
+        <TheOriginal recipe={recipe} sideBySide />
+        {/* Anything typed so far, at a comfortable reading width. */}
+        <div className="flex max-w-3xl flex-col gap-8">
+          <RecipeText recipe={recipe} />
+        </div>
+      </article>
+    );
+  }
+
+  // Typed up: on a wide screen the card sits in a side column that stays in
+  // view, to check the typed version against. On phones it follows below.
+  if (recipe.sourceImages.length > 0) {
+    return (
+      <article className="grid gap-x-12 gap-y-8 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start">
+        <div className="flex flex-col gap-8">
+          {title}
+          <RecipeText recipe={recipe} />
+        </div>
+        <div className="lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
+          <TheOriginal recipe={recipe} />
+        </div>
+      </article>
+    );
+  }
+
   return (
-    <article className="flex flex-col gap-8">
-      <div className="flex flex-col gap-3">
-        <h1 className="text-4xl">{recipe.title}</h1>
-        {untranscribed && <NotYetTypedUp />}
-      </div>
+    <article className="flex max-w-3xl flex-col gap-8">
+      {title}
+      <RecipeText recipe={recipe} />
+    </article>
+  );
+}
 
-      {untranscribed && <TheOriginal recipe={recipe} />}
-
+/** Ingredients, method, notes and story: whichever the recipe has. */
+function RecipeText({ recipe }: { recipe: Recipe }) {
+  return (
+    <>
       {recipe.ingredients.length > 0 && (
         <section aria-labelledby="ingredients" className="flex flex-col gap-3">
           <h2 id="ingredients" className="text-2xl">
@@ -92,9 +131,7 @@ function RecipeArticle({ recipe }: { recipe: Recipe }) {
           </p>
         </section>
       )}
-
-      {!untranscribed && <TheOriginal recipe={recipe} />}
-    </article>
+    </>
   );
 }
 
@@ -106,19 +143,22 @@ function NotYetTypedUp() {
   );
 }
 
-async function AdminTools({ recipeId }: { recipeId: string }) {
+async function AdminTools({ recipe }: { recipe: Recipe }) {
   const user = await getCurrentUser();
   if (user.role !== "admin") return null;
   return (
-    <>
-      <Link
-        href={`/recipes/${recipeId}/edit`}
-        className="inline-flex min-h-tap items-center justify-center self-start rounded-control border-2 border-ink bg-card px-5 font-semibold text-ink no-underline hover:bg-paper hover:text-ink"
-      >
-        Edit this recipe
-      </Link>
-      <SourceImageUploader recipeId={recipeId} />
-    </>
+    <div className="flex max-w-form flex-col gap-6 border-t border-line pt-6">
+      <div className="flex flex-wrap gap-3">
+        <Link
+          href={`/recipes/${recipe.id}/edit`}
+          className="inline-flex min-h-tap items-center justify-center rounded-control border-2 border-ink bg-card px-5 font-semibold text-ink no-underline hover:bg-paper hover:text-ink"
+        >
+          Edit this recipe
+        </Link>
+        <DeleteRecipe recipeId={recipe.id} title={recipe.title} />
+      </div>
+      <SourceImageUploader recipeId={recipe.id} />
+    </div>
   );
 }
 

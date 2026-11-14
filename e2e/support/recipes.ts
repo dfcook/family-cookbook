@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import { expect, type Page } from "@playwright/test";
 import { allowEmail, signIn, uniqueEmail } from "./auth";
 
@@ -20,4 +21,21 @@ export async function addRecipe(page: Page, title: string) {
   await page.getByRole("button", { name: "Save recipe" }).click();
   await expect(page).toHaveURL(/\/recipes\/[0-9a-f-]{36}$/);
   return page.url().split("/").pop() as string;
+}
+
+/** Saves a recipe by quick capture (as an admin), with two card photos. */
+export async function quickCapture(page: Page, title: string) {
+  await page.goto("/recipes/capture");
+  await page.getByRole("textbox", { name: "Recipe name" }).fill(title);
+  await page
+    .getByLabel("Choose photos")
+    .setInputFiles(
+      ["recipe-card.jpg", "recipe-card-rotated.jpg"].map((name) =>
+        join(__dirname, "..", "fixtures", name),
+      ),
+    );
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.getByRole("status")).toContainText("is saved", {
+    timeout: 30_000,
+  });
 }

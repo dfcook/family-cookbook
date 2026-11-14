@@ -1,11 +1,12 @@
 import { expect, test } from "@playwright/test";
 import {
+  adminClient,
   allowEmail,
   anonymousClient,
   signedInClient,
   uniqueEmail,
 } from "./support/auth";
-import { signInAs, uniqueTitle } from "./support/recipes";
+import { quickCapture, signInAs, uniqueTitle } from "./support/recipes";
 
 test("an admin adds a typed-up recipe and it reads in cooking order", async ({
   page,
@@ -152,5 +153,43 @@ test("an unknown recipe address shows not found", async ({ page }) => {
     await expect(
       page.getByRole("heading", { name: "We couldn't find that page" }),
     ).toBeVisible();
+  }
+});
+
+test("on a wide screen a typed-up recipe has its card in a column beside it", async ({
+  page,
+}, testInfo) => {
+  await signInAs(page, "admin");
+  const title = uniqueTitle("Side by side");
+  await quickCapture(page, title);
+  const { data: recipe, error } = await adminClient()
+    .from("recipes")
+    .update({
+      status: "complete",
+      ingredients: [{ type: "item", text: "2 eggs" }],
+      method: [{ type: "item", text: "Whisk" }],
+    })
+    .eq("title", title)
+    .select("id")
+    .single();
+  if (error) throw error;
+
+  await page.goto(`/recipes/${recipe.id}`);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(title);
+  const ingredients = await page
+    .getByRole("heading", { name: "Ingredients" })
+    .boundingBox();
+  const original = await page
+    .getByRole("heading", { name: "The original", exact: true })
+    .boundingBox();
+  if (!ingredients || !original) throw new Error("not laid out");
+
+  if (testInfo.project.name === "desktop") {
+    expect(original.x).toBeGreaterThan(ingredients.x + ingredients.width);
+    expect(original.y).toBeLessThan(ingredients.y);
+  } else {
+    // Phones: one column, the card after the recipe.
+    expect(original.x).toBe(ingredients.x);
+    expect(original.y).toBeGreaterThan(ingredients.y);
   }
 });
