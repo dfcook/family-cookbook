@@ -77,6 +77,26 @@ Settings → Secrets and variables → Actions:
 Then run **Actions → Nightly backup → Run workflow** once and check that it
 goes green and that the files appear in the R2 bucket.
 
+## Automatic restore check
+
+A second workflow ([`.github/workflows/restore-check.yml`](../.github/workflows/restore-check.yml))
+proves the backups really restore. It runs at 04:17 UTC on the 3rd of every
+month and can be run by hand (**Actions → Restore check → Run workflow**). On a
+fresh GitHub runner it:
+
+1. downloads the latest backup from R2;
+2. starts an empty local Supabase using the migrations from the backup's commit;
+3. restores it with `restore-local.sh`;
+4. checks the recipe and image-file counts against the backup's manifest, and
+   compares every image file byte for byte (`verify-restore.sh`);
+5. builds the app, signs in as a throwaway admin, checks every recipe is listed
+   and opens a recipe's photo.
+
+The data is the family's real collection and the repository's logs are public,
+so the check prints counts only, keeps no traces or screenshots and uploads no
+artifacts. The runner is deleted afterwards. If it fails, GitHub emails the
+repository owner.
+
 ## Restoring
 
 ### Restore into a local Supabase (to check a backup, or to recover data)
@@ -130,8 +150,10 @@ Docker instead.
 
 ## Restore tests
 
-A backup only counts once it has been restored. Record each test here.
+A backup only counts once it has been restored. The monthly restore check
+repeats this automatically; record manual tests and notable runs here.
 
-| Date       | Backup from             | Restored to          | Result                                                                                                                                                                                         |
-| ---------- | ----------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-11-14 | Local stack (rehearsal) | Fresh local Supabase | Counts matched (289 recipes, 246 images, 741 image files, 629 accounts); all 741 files byte-identical (`rclone check --download`); a restored admin signed in and saw a recipe with its photo. |
+| Date       | Backup from                                             | Restored to                                                                                                                                         | Result                                                                                                                                                                                                                     |
+| ---------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-11-14 | Local stack (rehearsal)                                 | Fresh local Supabase                                                                                                                                | Counts matched (289 recipes, 246 images, 741 image files, 629 accounts); all 741 files byte-identical (`rclone check --download`); a restored admin signed in and saw a recipe with its photo.                             |
+| 2026-11-14 | R2: live backup of 2026-11-14 (1 recipe, 3 image files) | Fresh local Supabase on a GitHub runner, via the restore check workflow ([run](https://github.com/dfcook/family-cookbook/actions/runs/43594972106)) | Counts matched the manifest (1 recipe, 1 image, 3 image files, 1 account); all image files byte-identical; a throwaway admin signed in, saw every recipe listed and the photo loaded. Log checked: no family data printed. |

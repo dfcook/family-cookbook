@@ -12,6 +12,9 @@ const isCI = !!process.env.CI;
 
 export default defineConfig({
   testDir: "./e2e",
+  // The restore check runs on its own, against restored real data
+  // (playwright.restore.config.ts).
+  testIgnore: "restore/**",
   globalSetup: "./e2e/global-setup.ts",
   fullyParallel: true,
   forbidOnly: isCI,
