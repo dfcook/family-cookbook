@@ -11,7 +11,7 @@ function env(name: string): string {
 }
 
 /** Service-role client for test setup only. Bypasses row-level security. */
-function adminClient() {
+export function adminClient() {
   return createClient(
     env("NEXT_PUBLIC_SUPABASE_URL"),
     env("SUPABASE_SECRET_KEY"),

@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { PageLayout } from "@/components/page-layout";
+import { getCurrentUser } from "@/lib/auth";
 import { type RecipeLine, toSections } from "@/lib/recipes/lines";
-import { getRecipe } from "@/lib/recipes/queries";
+import { getRecipe, type Recipe } from "@/lib/recipes/queries";
+import { SourceImageUploader } from "./source-image-uploader";
 
 export const metadata: Metadata = { title: "Recipe · Family Cookbook" };
 
@@ -24,6 +27,18 @@ async function RecipeDetails({ params }: { params: Promise<{ id: string }> }) {
   const recipe = await getRecipe(id);
   if (!recipe) notFound();
 
+  return (
+    <>
+      <RecipeArticle recipe={recipe} />
+      {/* Tools for changing the recipe sit outside the recipe itself. */}
+      <Suspense>
+        <AdminTools recipeId={recipe.id} />
+      </Suspense>
+    </>
+  );
+}
+
+function RecipeArticle({ recipe }: { recipe: Recipe }) {
   return (
     <article className="flex flex-col gap-8">
       <h1 className="text-4xl">{recipe.title}</h1>
@@ -68,8 +83,44 @@ async function RecipeDetails({ params }: { params: Promise<{ id: string }> }) {
           </p>
         </section>
       )}
+
+      {recipe.sourceImages.length > 0 && (
+        <section aria-labelledby="original" className="flex flex-col gap-4">
+          <h2 id="original" className="text-2xl">
+            The original
+          </h2>
+          {recipe.sourceImages.map((image, i) => (
+            <figure key={image.id} className="flex flex-col gap-2">
+              {/* Signed, short-lived URLs: skip Next's image optimiser, which
+                  would cache private photos under URLs that change anyway. */}
+              <Image
+                src={image.url}
+                alt={
+                  image.caption ??
+                  `Photo ${i + 1} of the original recipe card for ${recipe.title}`
+                }
+                width={image.width}
+                height={image.height}
+                unoptimized
+                className="h-auto w-full rounded-card border border-line bg-card"
+              />
+              {image.caption && (
+                <figcaption className="text-ink-muted">
+                  {image.caption}
+                </figcaption>
+              )}
+            </figure>
+          ))}
+        </section>
+      )}
     </article>
   );
+}
+
+async function AdminTools({ recipeId }: { recipeId: string }) {
+  const user = await getCurrentUser();
+  if (user.role !== "admin") return null;
+  return <SourceImageUploader recipeId={recipeId} />;
 }
 
 function Ingredients({ lines }: { lines: RecipeLine[] }) {

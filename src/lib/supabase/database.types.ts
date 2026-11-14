@@ -37,6 +37,26 @@ export type Database = {
                   Relationships: [
                     
                   ]
+                },"images": {
+                  Row: {
+                    "created_at": string,"created_by": string,"display_path": string,"height": number,"id": string,"original_path": string,"thumb_path": string,"width": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"created_by"?: string,"display_path": string,"height": number,"id": string,"original_path": string,"thumb_path": string,"width": number
+                  }
+                  Update: {
+                    "created_at"?: string,"created_by"?: string,"display_path"?: string,"height"?: number,"id"?: string,"original_path"?: string,"thumb_path"?: string,"width"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "images_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"profiles": {
                   Row: {
                     "created_at": string,"email": string,"id": string,"name": string | null,"role": Database["public"]['Enums']["app_role"]
@@ -50,6 +70,32 @@ export type Database = {
                   }
                   Relationships: [
                     
+                  ]
+                },"recipe_source_images": {
+                  Row: {
+                    "caption": string | null,"image_id": string,"recipe_id": string,"sort_order": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "caption"?: string | null,"image_id": string,"recipe_id": string,"sort_order": number
+                  }
+                  Update: {
+                    "caption"?: string | null,"image_id"?: string,"recipe_id"?: string,"sort_order"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "recipe_source_images_image_id_fkey"
+      columns: ["image_id"]
+isOneToOne: true
+      referencedRelation: "images"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "recipe_source_images_recipe_id_fkey"
+      columns: ["recipe_id"]
+isOneToOne: false
+      referencedRelation: "recipes"
+      referencedColumns: ["id"]
+    }
                   ]
                 },"recipes": {
                   Row: {
@@ -77,7 +123,10 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "current_app_role":
+            "attach_source_image":
+{ Args: { "p_height": number,"p_image_id": string,"p_recipe_id": string,"p_width": number }; Returns: undefined
+                           },
+"current_app_role":
 { Args: Record<PropertyKey, never>; Returns: Database["public"]['Enums']["app_role"]
                            },
 "hook_before_user_created":
@@ -85,6 +134,9 @@ isOneToOne: false
                            },
 "is_recipe_lines":
 { Args: { "lines": Json }; Returns: boolean
+                           },
+"recipe_image_path":
+{ Args: { "image_id": string,"recipe_id": string,"variant": string }; Returns: string
                            }
           }
           Enums: {

@@ -1,0 +1,23 @@
+import { expect, type Page } from "@playwright/test";
+import { allowEmail, signIn, uniqueEmail } from "./auth";
+
+export async function signInAs(page: Page, role: "admin" | "reader") {
+  const email = uniqueEmail(role);
+  await allowEmail(email, role);
+  await signIn(page, email);
+  return email;
+}
+
+export function uniqueTitle(name: string) {
+  return `${name} ${Math.random().toString(36).slice(2, 7)}`;
+}
+
+/** Adds a recipe through the UI (as an admin) and returns its id. */
+export async function addRecipe(page: Page, title: string) {
+  await page.goto("/recipes/new");
+  await page.getByLabel("Recipe name").fill(title);
+  await page.getByLabel("Ingredients").fill("Flour\nButter");
+  await page.getByRole("button", { name: "Save recipe" }).click();
+  await expect(page).toHaveURL(/\/recipes\/[0-9a-f-]{36}$/);
+  return page.url().split("/").pop() as string;
+}
