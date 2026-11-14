@@ -14,6 +14,8 @@ type RecipeFormProps = {
   initialValues?: RecipeFormValues;
   submitLabel: string;
   cancelHref: string;
+  /** Show the "fully typed up" tick box (when editing). */
+  showTypedUp?: boolean;
 };
 
 const empty: RecipeFormValues = {
@@ -22,6 +24,7 @@ const empty: RecipeFormValues = {
   method: "",
   notes: "",
   story: "",
+  typedUp: true,
 };
 
 export function RecipeForm({
@@ -29,6 +32,7 @@ export function RecipeForm({
   initialValues = empty,
   submitLabel,
   cancelHref,
+  showTypedUp = false,
 }: RecipeFormProps) {
   const [state, formAction, saving] = useActionState(action, {
     values: initialValues,
@@ -83,6 +87,22 @@ export function RecipeForm({
         defaultValue={values.story}
         error={errors.story}
       />
+      {showTypedUp && (
+        <label className="flex min-h-tap items-start gap-3 rounded-card border border-line bg-card p-4">
+          <input
+            type="checkbox"
+            name="typedUp"
+            defaultChecked={values.typedUp}
+            className="mt-1 size-6 shrink-0 accent-accent"
+          />
+          <span className="flex flex-col gap-1">
+            <span className="text-lg font-semibold">Fully typed up</span>
+            <span className="text-ink-muted">
+              Untick to keep it on the &ldquo;to type up&rdquo; list.
+            </span>
+          </span>
+        </label>
+      )}
       <FormError message={errors.form} />
       <div className="flex flex-col gap-3 sm:flex-row-reverse sm:justify-start">
         <Button type="submit" disabled={saving}>

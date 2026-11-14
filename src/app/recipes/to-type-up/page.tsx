@@ -46,7 +46,7 @@ async function ToTypeUpList() {
           {recipes.map((recipe) => (
             <li key={recipe.id}>
               <Link
-                href={`/recipes/${recipe.id}`}
+                href={`/recipes/${recipe.id}/edit`}
                 className="flex min-h-tap flex-col gap-1 px-4 py-3 no-underline"
               >
                 <span className="text-lg underline underline-offset-4">

@@ -70,8 +70,17 @@ test("an admin captures two cards in a row and finds them in the to-type-up list
     list.getByRole("link", { name: new RegExp(first) }),
   ).toContainText("2 photos");
 
-  // Each links to the recipe, which leads with the card.
+  // Each opens the edit form, with the card beside it to type from.
   await list.getByRole("link", { name: new RegExp(first) }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    `Edit ${first}`,
+  );
+  await expect(
+    page.getByRole("region", { name: "The original" }).getByRole("img"),
+  ).toHaveCount(2);
+
+  // The recipe page leads with the card until it's typed up.
+  await page.getByRole("link", { name: "Cancel" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(first);
   await expect(page.getByText("Not yet typed up")).toBeVisible();
   expect(await page.locator("article h2").allTextContents()).toEqual([

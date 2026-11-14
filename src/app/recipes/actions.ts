@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { parseLines } from "@/lib/recipes/lines";
@@ -11,12 +12,23 @@ export type RecipeFormValues = {
   method: string;
   notes: string;
   story: string;
+  /** Whether the recipe is fully typed up (status "complete"). */
+  typedUp: boolean;
 };
 
 export type RecipeFormState = {
   values: RecipeFormValues;
   errors: Partial<Record<keyof RecipeFormValues | "form", string>>;
 };
+
+/**
+ * After any change, refresh every page that might show it (lists, recipe
+ * pages, edit forms), so nothing shows stale data. The app is small enough
+ * that refreshing everything is simplest and safe.
+ */
+function refreshRecipePages() {
+  revalidatePath("/", "layout");
+}
 
 const LIMITS = {
   title: 200,
@@ -34,6 +46,7 @@ function readValues(formData: FormData): RecipeFormValues {
     method: field("method"),
     notes: field("notes").trim(),
     story: field("story").trim(),
+    typedUp: formData.get("typedUp") === "on",
   };
 }
 
@@ -41,7 +54,7 @@ function validate(values: RecipeFormValues): RecipeFormState["errors"] {
   const errors: RecipeFormState["errors"] = {};
   if (!values.title) errors.title = "Please give the recipe a name.";
   for (const [name, max] of Object.entries(LIMITS) as [
-    keyof RecipeFormValues,
+    keyof typeof LIMITS,
     number,
   ][]) {
     if (!errors[name] && values[name].length > max) {
@@ -87,7 +100,56 @@ export async function createRecipe(
     };
   }
 
+  refreshRecipePages();
   redirect(`/recipes/${data.id}`);
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Saves changes to a recipe. Bound to the recipe's id by the edit page:
+ * updateRecipe.bind(null, id).
+ */
+export async function updateRecipe(
+  recipeId: string,
+  _prev: RecipeFormState,
+  formData: FormData,
+): Promise<RecipeFormState> {
+  await requireAdmin();
+
+  const values = readValues(formData);
+  const errors = validate(values);
+  if (Object.keys(errors).length > 0) return { values, errors };
+  if (!UUID.test(recipeId)) {
+    return { values, errors: { form: "This recipe no longer exists." } };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("recipes")
+    .update({
+      title: values.title,
+      status: values.typedUp ? "complete" : "needs_transcribing",
+      ingredients: parseLines(values.ingredients),
+      method: parseLines(values.method),
+      notes: values.notes || null,
+      story: values.story || null,
+    })
+    .eq("id", recipeId)
+    .select("id");
+
+  if (error || !data?.length) {
+    console.error("updateRecipe failed", error?.code, error?.message);
+    return {
+      values,
+      errors: {
+        form: "Sorry, the changes couldn't be saved. Please try again.",
+      },
+    };
+  }
+
+  refreshRecipePages();
+  redirect(`/recipes/${recipeId}`);
 }
 
 export type QuickCaptureResult =
@@ -123,5 +185,6 @@ export async function createQuickCapture(
       error: "Sorry, the recipe couldn't be saved. Please try again.",
     };
   }
+  refreshRecipePages();
   return { ok: true, recipeId: data.id };
 }
