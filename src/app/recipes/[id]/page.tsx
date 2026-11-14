@@ -39,9 +39,17 @@ async function RecipeDetails({ params }: { params: Promise<{ id: string }> }) {
 }
 
 function RecipeArticle({ recipe }: { recipe: Recipe }) {
+  // Saved by quick capture: the card itself is the recipe for now, so show it
+  // first and big.
+  const untranscribed = recipe.status === "needs_transcribing";
   return (
     <article className="flex flex-col gap-8">
-      <h1 className="text-4xl">{recipe.title}</h1>
+      <div className="flex flex-col gap-3">
+        <h1 className="text-4xl">{recipe.title}</h1>
+        {untranscribed && <NotYetTypedUp />}
+      </div>
+
+      {untranscribed && <TheOriginal recipe={recipe} />}
 
       {recipe.ingredients.length > 0 && (
         <section aria-labelledby="ingredients" className="flex flex-col gap-3">
@@ -84,36 +92,47 @@ function RecipeArticle({ recipe }: { recipe: Recipe }) {
         </section>
       )}
 
-      {recipe.sourceImages.length > 0 && (
-        <section aria-labelledby="original" className="flex flex-col gap-4">
-          <h2 id="original" className="text-2xl">
-            The original
-          </h2>
-          {recipe.sourceImages.map((image, i) => (
-            <figure key={image.id} className="flex flex-col gap-2">
-              {/* Signed, short-lived URLs: skip Next's image optimiser, which
-                  would cache private photos under URLs that change anyway. */}
-              <Image
-                src={image.url}
-                alt={
-                  image.caption ??
-                  `Photo ${i + 1} of the original recipe card for ${recipe.title}`
-                }
-                width={image.width}
-                height={image.height}
-                unoptimized
-                className="h-auto w-full rounded-card border border-line bg-card"
-              />
-              {image.caption && (
-                <figcaption className="text-ink-muted">
-                  {image.caption}
-                </figcaption>
-              )}
-            </figure>
-          ))}
-        </section>
-      )}
+      {!untranscribed && <TheOriginal recipe={recipe} />}
     </article>
+  );
+}
+
+function NotYetTypedUp() {
+  return (
+    <p className="self-start rounded-control border border-field bg-card px-3 py-1 text-sm font-semibold text-ink-muted">
+      Not yet typed up: read it from the card below
+    </p>
+  );
+}
+
+function TheOriginal({ recipe }: { recipe: Recipe }) {
+  if (recipe.sourceImages.length === 0) return null;
+  return (
+    <section aria-labelledby="original" className="flex flex-col gap-4">
+      <h2 id="original" className="text-2xl">
+        The original
+      </h2>
+      {recipe.sourceImages.map((image, i) => (
+        <figure key={image.id} className="flex flex-col gap-2">
+          {/* Signed, short-lived URLs: skip Next's image optimiser, which
+              would cache private photos under URLs that change anyway. */}
+          <Image
+            src={image.url}
+            alt={
+              image.caption ??
+              `Photo ${i + 1} of the original recipe card for ${recipe.title}`
+            }
+            width={image.width}
+            height={image.height}
+            unoptimized
+            className="h-auto w-full rounded-card border border-line bg-card"
+          />
+          {image.caption && (
+            <figcaption className="text-ink-muted">{image.caption}</figcaption>
+          )}
+        </figure>
+      ))}
+    </section>
   );
 }
 
