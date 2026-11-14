@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { byTitle, chooseCardImage } from "./card-image";
 import { asRecipeLines } from "./lines";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -7,15 +8,60 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 // Every read goes through the signed-in user's Supabase client, so row-level
 // security decides what they can see.
 
+/**
+ * Every recipe for the home grid, by title, each with a short-lived link to
+ * its card picture (see chooseCardImage), or null for a text-only card.
+ */
 export async function listRecipes() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("recipes")
-    .select("id, title, status")
-    .order("title", { ascending: true });
+    .select("id, title, status, recipe_source_images (images (thumb_path))")
+    // Only the first photo of the original is needed for the card.
+    .order("sort_order", {
+      referencedTable: "recipe_source_images",
+      ascending: true,
+    })
+    .limit(1, { referencedTable: "recipe_source_images" });
   if (error) throw error;
-  return data;
+
+  const recipes = data
+    .map((recipe) => ({
+      id: recipe.id,
+      title: recipe.title,
+      status: recipe.status,
+      image: chooseCardImage({
+        sourceThumbPaths: recipe.recipe_source_images.flatMap((row) =>
+          row.images ? [row.images.thumb_path] : [],
+        ),
+      }),
+    }))
+    .sort(byTitle);
+
+  const paths = recipes.flatMap((recipe) =>
+    recipe.image ? [recipe.image.path] : [],
+  );
+  const urls = new Map<string, string>();
+  if (paths.length > 0) {
+    const { data: signed, error: signError } = await supabase.storage
+      .from("recipe-images")
+      .createSignedUrls(paths, SIGNED_URL_SECONDS);
+    if (signError) throw signError;
+    for (const item of signed) {
+      if (item.path && item.signedUrl) urls.set(item.path, item.signedUrl);
+    }
+  }
+
+  return recipes.map(({ image, ...recipe }) => {
+    const url = image && urls.get(image.path);
+    return {
+      ...recipe,
+      image: image && url ? { kind: image.kind, url } : null,
+    };
+  });
 }
+
+export type RecipeSummary = Awaited<ReturnType<typeof listRecipes>>[number];
 
 /** Recipes saved by quick capture and not yet typed up, oldest first. */
 export async function listToTypeUp() {
