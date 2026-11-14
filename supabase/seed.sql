@@ -1,0 +1,2 @@
+-- Seed data for local development and end-to-end tests.
+-- Filled in by the "Seed data script" ticket. Never put real family data here.
