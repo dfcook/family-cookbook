@@ -103,3 +103,33 @@ export async function deleteProfile(email: string) {
   const { error } = await adminClient().from("profiles").delete().eq("email", email);
   if (error) throw error;
 }
+
+/**
+ * A Supabase client signed in as `email` (via a real emailed code), for
+ * checking what row-level security allows that user to do directly.
+ */
+export async function signedInClient(email: string) {
+  const client = createClient(
+    env("NEXT_PUBLIC_SUPABASE_URL"),
+    env("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"),
+    { auth: { persistSession: false, autoRefreshToken: false } },
+  );
+  const { error: sendError } = await client.auth.signInWithOtp({ email });
+  if (sendError) throw sendError;
+  const { error } = await client.auth.verifyOtp({
+    email,
+    token: await getSignInCode(email),
+    type: "email",
+  });
+  if (error) throw error;
+  return client;
+}
+
+/** A Supabase client with no session at all. */
+export function anonymousClient() {
+  return createClient(
+    env("NEXT_PUBLIC_SUPABASE_URL"),
+    env("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"),
+    { auth: { persistSession: false, autoRefreshToken: false } },
+  );
+}
