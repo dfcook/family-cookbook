@@ -17,6 +17,8 @@ export type PhotoUpload = {
   status: "waiting" | "preparing" | "uploading" | "saving" | "done" | "failed";
   progress: number; // 0 to 1
   error?: string;
+  /** Which step failed and why, shown under "Details" to help fix problems. */
+  detail?: string;
   /** False when trying again can't help, e.g. the file isn't a photo. */
   retryable?: boolean;
 };
@@ -44,14 +46,22 @@ export function usePhotoUploads({
 
   const run = useCallback(
     async ({ key, file, recipeId }: PhotoUpload): Promise<boolean> => {
-      update(key, { status: "preparing", progress: 0, error: undefined });
+      update(key, {
+        status: "preparing",
+        progress: 0,
+        error: undefined,
+        detail: undefined,
+      });
       let imageId: string | undefined;
+      let step = "preparing the photo";
       try {
         const image = await processImage(file);
+        step = "starting the upload";
         const prepared = await prepareSourceImageUpload(recipeId);
         if (!prepared.ok) throw new Error(prepared.error);
         imageId = prepared.imageId;
 
+        step = "uploading";
         update(key, { status: "uploading" });
         const total = VARIANTS.reduce((n, v) => n + image[v].size, 0);
         const loaded: Record<Variant, number> = {
@@ -74,12 +84,15 @@ export function usePhotoUploads({
           ),
         );
 
+        step = "saving the photo";
         update(key, { status: "saving", progress: 1 });
-        const attached = await attachSourceImage(
-          recipeId,
-          prepared.imageId,
-          image,
-        );
+        // Only the size: the files are already uploaded. (Passing the image
+        // itself sent megabytes of photo through the server action, over its
+        // 1 MB limit, so real phone photos failed.)
+        const attached = await attachSourceImage(recipeId, prepared.imageId, {
+          width: image.width,
+          height: image.height,
+        });
         if (!attached.ok) throw new Error(attached.error);
 
         update(key, { status: "done" });
@@ -88,8 +101,11 @@ export function usePhotoUploads({
       } catch (error) {
         if (imageId) void discardSourceImageUpload(recipeId, imageId);
         const unreadable = error instanceof UnreadableImageError;
+        const reason = error instanceof Error ? error.message : String(error);
+        console.error(`Photo upload failed while ${step}:`, error);
         update(key, {
           status: "failed",
+          detail: `Failed while ${step}: ${reason}`,
           retryable: !unreadable,
           error: unreadable
             ? error.message

@@ -55,8 +55,12 @@ function CaptureOne({ onCaptureAnother }: { onCaptureAnother: () => void }) {
     ]);
   }
 
-  async function save() {
-    if (!title.trim()) {
+  async function save(form: HTMLFormElement) {
+    // Read the name from the form, not from typing events: anything typed
+    // before the page finished loading on a slow phone still counts.
+    const title = String(new FormData(form).get("title") ?? "").trim();
+    setTitle(title);
+    if (!title) {
       setStep({
         kind: "editing",
         titleError: "Please give the recipe a name.",
@@ -135,14 +139,14 @@ function CaptureOne({ onCaptureAnother }: { onCaptureAnother: () => void }) {
       className="flex flex-col gap-6"
       onSubmit={(event) => {
         event.preventDefault();
-        void save();
+        void save(event.currentTarget);
       }}
     >
       <TextField
         label="Recipe name"
         hint="As it's written on the card, or what the family calls it."
-        value={title}
-        onChange={(event) => setTitle(event.target.value)}
+        name="title"
+        defaultValue={title}
         maxLength={200}
         autoComplete="off"
         error={step.titleError}

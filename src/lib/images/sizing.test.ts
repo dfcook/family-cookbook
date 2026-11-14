@@ -23,17 +23,23 @@ describe("fitWithin", () => {
     });
   });
 
-  test("keeps a normal phone photo at full resolution as the original", () => {
+  test("scales a 12 MP phone photo down to 2560px for the original", () => {
     expect(fitWithin({ width: 4032, height: 3024 }, VARIANTS.original)).toEqual(
-      {
-        width: 4032,
-        height: 3024,
-      },
+      { width: 2560, height: 1920 },
     );
   });
 
-  test("scales a very large original down to the canvas pixel limit", () => {
-    const size = fitWithin({ width: 8064, height: 6048 }, VARIANTS.original);
+  test("keeps a smaller photo's original at its own size", () => {
+    expect(fitWithin({ width: 2400, height: 1800 }, VARIANTS.original)).toEqual(
+      { width: 2400, height: 1800 },
+    );
+  });
+
+  test("never draws a canvas over the pixel limit", () => {
+    const size = fitWithin(
+      { width: 8064, height: 6048 },
+      { maxEdge: Number.POSITIVE_INFINITY, maxPixels: 16_000_000 },
+    );
     expect(size.width * size.height).toBeLessThanOrEqual(16_000_000);
     // Aspect ratio is kept (4:3).
     expect(size.width / size.height).toBeCloseTo(4 / 3, 2);

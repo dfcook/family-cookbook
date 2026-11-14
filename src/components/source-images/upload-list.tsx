@@ -75,6 +75,14 @@ function UploadRow({
           <p role="alert" className="text-danger">
             {upload.error}
           </p>
+          {upload.detail && (
+            <details className="w-full text-sm text-ink-muted">
+              <summary className="min-h-tap cursor-pointer content-center">
+                Details
+              </summary>
+              <p className="break-words">{upload.detail}</p>
+            </details>
+          )}
           {upload.retryable && (
             <Button variant="secondary" onClick={onRetry}>
               Try again

@@ -24,6 +24,12 @@ export default defineConfig({
   projects: [
     { name: "desktop", use: { ...devices["Desktop Chrome"] } },
     { name: "phone", use: { ...devices["Pixel 7"] } },
+    // Safari's engine, as on the family's iPhones. WebKit needs Ubuntu system
+    // libraries, so it runs in CI, or locally with PW_WEBKIT=1 (e.g. inside
+    // the mcr.microsoft.com/playwright Docker image).
+    ...(isCI || process.env.PW_WEBKIT
+      ? [{ name: "iphone", use: { ...devices["iPhone 15"] } }]
+      : []),
   ],
   webServer: {
     // CI tests the production build (built in an earlier step); locally use the dev server.
