@@ -88,3 +88,7 @@ Local settings live in `supabase/config.toml`; the hosted project needs the same
 4. **Authentication → URL Configuration:** set **Site URL** to the production URL.
 5. **SQL editor:** add your own email to the allowlist as `admin`.
 6. **Email delivery:** Supabase's built-in email service only sends to members of the Supabase project team and is heavily rate-limited. Before inviting family, set up custom SMTP under **Authentication → Emails → SMTP settings** (for example with Resend's free tier).
+
+## Backups
+
+The database and every image are copied to Cloudflare R2 every night, and the restore has been tested. See [docs/backup-and-restore.md](docs/backup-and-restore.md) for setup, restoring and the restore test log.
