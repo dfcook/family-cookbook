@@ -11,10 +11,27 @@ export async function listRecipes() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("recipes")
-    .select("id, title")
+    .select("id, title, status")
     .order("title", { ascending: true });
   if (error) throw error;
   return data;
+}
+
+/** Recipes saved by quick capture and not yet typed up, oldest first. */
+export async function listToTypeUp() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("recipes")
+    .select("id, title, created_at, recipe_source_images (count)")
+    .eq("status", "needs_transcribing")
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return data.map((recipe) => ({
+    id: recipe.id,
+    title: recipe.title,
+    createdAt: recipe.created_at,
+    photoCount: recipe.recipe_source_images[0]?.count ?? 0,
+  }));
 }
 
 export async function getRecipe(id: string) {

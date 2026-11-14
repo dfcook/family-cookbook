@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { PageLayout } from "@/components/page-layout";
 import { getCurrentUser } from "@/lib/auth";
-import { listRecipes } from "@/lib/recipes/queries";
+import { listRecipes, listToTypeUp } from "@/lib/recipes/queries";
 
 export default function Home() {
   return (
@@ -10,7 +10,7 @@ export default function Home() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-4xl">Recipes</h1>
         <Suspense>
-          <AddRecipeLink />
+          <AdminLinks />
         </Suspense>
       </div>
       <Suspense fallback={<p className="text-ink-muted">Loading recipes…</p>}>
@@ -20,16 +20,29 @@ export default function Home() {
   );
 }
 
-async function AddRecipeLink() {
+const primaryLink =
+  "inline-flex min-h-tap items-center justify-center rounded-control bg-accent px-5 font-semibold text-on-accent no-underline hover:bg-accent-strong hover:text-on-accent";
+const secondaryLink =
+  "inline-flex min-h-tap items-center justify-center rounded-control border-2 border-ink bg-card px-5 font-semibold text-ink no-underline hover:bg-paper hover:text-ink";
+
+async function AdminLinks() {
   const user = await getCurrentUser();
   if (user.role !== "admin") return null;
+  const toTypeUp = (await listToTypeUp()).length;
   return (
-    <Link
-      href="/recipes/new"
-      className="inline-flex min-h-tap items-center rounded-control bg-accent px-5 font-semibold text-on-accent no-underline hover:bg-accent-strong hover:text-on-accent"
-    >
-      Add a recipe
-    </Link>
+    <nav aria-label="Add recipes" className="flex flex-wrap gap-3">
+      <Link href="/recipes/capture" className={primaryLink}>
+        Quick capture
+      </Link>
+      <Link href="/recipes/new" className={secondaryLink}>
+        Add a recipe
+      </Link>
+      {toTypeUp > 0 && (
+        <Link href="/recipes/to-type-up" className={secondaryLink}>
+          To type up ({toTypeUp})
+        </Link>
+      )}
+    </nav>
   );
 }
 
@@ -53,7 +66,14 @@ async function RecipeList() {
             href={`/recipes/${recipe.id}`}
             className="flex min-h-tap items-center px-4 py-3 text-lg"
           >
-            {recipe.title}
+            <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              {recipe.title}
+              {recipe.status === "needs_transcribing" && (
+                <span className="text-sm text-ink-muted no-underline">
+                  Not yet typed up
+                </span>
+              )}
+            </span>
           </Link>
         </li>
       ))}

@@ -89,3 +89,39 @@ export async function createRecipe(
 
   redirect(`/recipes/${data.id}`);
 }
+
+export type QuickCaptureResult =
+  | { ok: true; recipeId: string }
+  | { ok: false; error: string };
+
+/**
+ * Quick capture: save a recipe with just a name, marked as needing typing up.
+ * The photos of the card are uploaded to it straight afterwards.
+ */
+export async function createQuickCapture(
+  title: string,
+): Promise<QuickCaptureResult> {
+  await requireAdmin();
+
+  const trimmed = title.trim();
+  if (!trimmed) return { ok: false, error: "Please give the recipe a name." };
+  if (trimmed.length > LIMITS.title) {
+    return { ok: false, error: "That name is too long." };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("recipes")
+    .insert({ title: trimmed, status: "needs_transcribing" })
+    .select("id")
+    .single();
+
+  if (error || !data) {
+    console.error("createQuickCapture failed", error?.code, error?.message);
+    return {
+      ok: false,
+      error: "Sorry, the recipe couldn't be saved. Please try again.",
+    };
+  }
+  return { ok: true, recipeId: data.id };
+}
