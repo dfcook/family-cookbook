@@ -2,6 +2,14 @@
 
 Private family recipe archive (Next.js + Supabase). Product spec: `family-cookbook-prd.md`.
 
+@AGENTS.md
+
+## Commands
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm test` (Vitest), `pnpm test:e2e` (Playwright)
+- `pnpm db:start` / `pnpm db:reset` for local Supabase (needs Docker); `pnpm db:migration <name>` for schema changes
+- Schema changes are always Supabase migrations
+
 ## Agent skills
 
 ### Issue tracker
