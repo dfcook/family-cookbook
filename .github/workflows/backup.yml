@@ -1,0 +1,59 @@
+name: Nightly backup
+
+# Copies the hosted database and every image to Cloudflare R2, then prunes old
+# database backups. See docs/backup-and-restore.md for setup and restoring.
+# GitHub emails the repository owner if a scheduled run fails.
+
+on:
+  schedule:
+    - cron: "17 2 * * *" # 02:17 UTC every night
+  workflow_dispatch:
+
+concurrency:
+  group: backup
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    # Skipped until the R2 bucket is configured.
+    if: vars.R2_BUCKET != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      BACKUP_SOURCE: supabase:recipe-images
+      BACKUP_DEST: r2:${{ vars.R2_BUCKET }}
+      # Hosted Supabase Storage, through its S3-compatible API.
+      RCLONE_CONFIG_SUPABASE_TYPE: s3
+      RCLONE_CONFIG_SUPABASE_PROVIDER: Other
+      RCLONE_CONFIG_SUPABASE_ENDPOINT: https://${{ vars.SUPABASE_PROJECT_REF }}.storage.supabase.co/storage/v1/s3
+      RCLONE_CONFIG_SUPABASE_REGION: ${{ vars.SUPABASE_STORAGE_REGION }}
+      RCLONE_CONFIG_SUPABASE_ACCESS_KEY_ID: ${{ secrets.SUPABASE_S3_ACCESS_KEY_ID }}
+      RCLONE_CONFIG_SUPABASE_SECRET_ACCESS_KEY: ${{ secrets.SUPABASE_S3_SECRET_ACCESS_KEY }}
+      RCLONE_CONFIG_SUPABASE_FORCE_PATH_STYLE: "true"
+      # Cloudflare R2.
+      RCLONE_CONFIG_R2_TYPE: s3
+      RCLONE_CONFIG_R2_PROVIDER: Cloudflare
+      RCLONE_CONFIG_R2_ENDPOINT: https://${{ vars.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+      RCLONE_CONFIG_R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      RCLONE_CONFIG_R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      RCLONE_CONFIG_R2_NO_CHECK_BUCKET: "true"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Install rclone
+        run: sudo apt-get update -q && sudo apt-get install -y -q rclone
+
+      - name: Back up the database and images
+        run: scripts/backup/backup.sh
+
+      - name: Prune old database backups
+        run: scripts/backup/prune.sh
