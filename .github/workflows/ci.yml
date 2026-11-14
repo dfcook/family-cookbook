@@ -40,6 +40,16 @@ jobs:
       - name: Start local Supabase (applies migrations and seed)
         run: pnpm db:start
 
+      - name: Export local Supabase settings for the app and tests
+        run: |
+          status=$(pnpm exec supabase status -o json)
+          {
+            echo "NEXT_PUBLIC_SUPABASE_URL=$(jq -r .API_URL <<<"$status")"
+            echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$(jq -r .PUBLISHABLE_KEY <<<"$status")"
+            echo "SUPABASE_SECRET_KEY=$(jq -r .SECRET_KEY <<<"$status")"
+            echo "MAILPIT_URL=$(jq -r .MAILPIT_URL <<<"$status")"
+          } >> "$GITHUB_ENV"
+
       - name: Install Playwright browser
         run: pnpm exec playwright install --with-deps chromium
 
