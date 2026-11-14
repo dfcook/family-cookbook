@@ -1,22 +1,11 @@
-import { expect, type Page, test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import {
   allowEmail,
   anonymousClient,
   signedInClient,
-  signIn,
   uniqueEmail,
 } from "./support/auth";
-
-async function signInAs(page: Page, role: "admin" | "reader") {
-  const email = uniqueEmail(role);
-  await allowEmail(email, role);
-  await signIn(page, email);
-  return email;
-}
-
-function uniqueTitle(name: string) {
-  return `${name} ${Math.random().toString(36).slice(2, 7)}`;
-}
+import { signInAs, uniqueTitle } from "./support/recipes";
 
 test("an admin adds a typed-up recipe and it reads in cooking order", async ({
   page,
