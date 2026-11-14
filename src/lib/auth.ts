@@ -1,5 +1,5 @@
 import "server-only";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 
@@ -32,5 +32,15 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser> => {
   // clear page rather than bouncing between home and sign-in.
   if (!profile) redirect("/no-access");
 
-  return profile as CurrentUser;
+  return profile;
 });
+
+/**
+ * The signed-in user, who must be an admin. Anyone else gets a 404, so pages
+ * like "Add recipe" don't even reveal that they exist.
+ */
+export async function requireAdmin(): Promise<CurrentUser> {
+  const user = await getCurrentUser();
+  if (user.role !== "admin") notFound();
+  return user;
+}
