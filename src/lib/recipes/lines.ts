@@ -45,3 +45,13 @@ export function asRecipeLines(value: unknown): RecipeLine[] {
       typeof line.text === "string",
   );
 }
+
+/**
+ * The reverse of parseLines, for the edit form: one line per item, with each
+ * heading written back with its colon ("For the pastry:").
+ */
+export function linesToText(lines: RecipeLine[]): string {
+  return lines
+    .map((line) => (line.type === "heading" ? `${line.text}:` : line.text))
+    .join("\n");
+}

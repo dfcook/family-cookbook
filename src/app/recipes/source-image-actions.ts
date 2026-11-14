@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
 import { recipeImagePath, type Variant } from "@/lib/images/sizing";
 import { createClient } from "@/lib/supabase/server";
@@ -70,6 +71,7 @@ export async function attachSourceImage(
     console.error("attachSourceImage failed", error.code, error.message);
     return { ok: false, error: "Couldn't save the photo. Please try again." };
   }
+  revalidatePath("/", "layout");
   return { ok: true };
 }
 

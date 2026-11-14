@@ -40,7 +40,7 @@ export async function getRecipe(id: string) {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("recipes")
-    .select("id, title, status, ingredients, method, notes, story")
+    .select("id, title, status, ingredients, method, notes, story, updated_at")
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;

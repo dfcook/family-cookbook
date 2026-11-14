@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { asRecipeLines, parseLines, toSections } from "./lines";
+import { asRecipeLines, linesToText, parseLines, toSections } from "./lines";
 
 describe("parseLines", () => {
   test("one item per line, with no headings", () => {
@@ -82,5 +82,32 @@ describe("asRecipeLines", () => {
       { type: "heading", text: "Topping" },
     ]);
     expect(asRecipeLines(null)).toEqual([]);
+  });
+});
+
+describe("linesToText", () => {
+  test("writes headings back with their colon, one line per item", () => {
+    expect(
+      linesToText([
+        { type: "heading", text: "For the pastry" },
+        { type: "item", text: "200g flour" },
+        { type: "item", text: "Oven: 180C" },
+      ]),
+    ).toBe("For the pastry:\n200g flour\nOven: 180C");
+  });
+
+  test("no lines gives an empty box", () => {
+    expect(linesToText([])).toBe("");
+  });
+
+  test.each([
+    ["no headings", "200g plain flour\n100g butter\n1 egg"],
+    ["sections", "For the pastry:\n200g flour\nFor the filling:\n3 apples"],
+    ["a colon mid-line", "Oven: 180C, gas mark 4\nBake: 20 minutes"],
+    ["messy typing", "  Topping :\n\n\r\n  sugar  \n:\nNote:: keep cool"],
+    ["a heading ending in two colons", "Important::\nDon't overmix"],
+  ])("round trip loses nothing: %s", (_name, typed) => {
+    const lines = parseLines(typed);
+    expect(parseLines(linesToText(lines))).toEqual(lines);
   });
 });

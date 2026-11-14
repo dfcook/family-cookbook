@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { PageLayout } from "@/components/page-layout";
@@ -7,6 +7,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { type RecipeLine, toSections } from "@/lib/recipes/lines";
 import { getRecipe, type Recipe } from "@/lib/recipes/queries";
 import { SourceImageUploader } from "./source-image-uploader";
+import { TheOriginal } from "./the-original";
 
 export const metadata: Metadata = { title: "Recipe · Family Cookbook" };
 
@@ -105,41 +106,20 @@ function NotYetTypedUp() {
   );
 }
 
-function TheOriginal({ recipe }: { recipe: Recipe }) {
-  if (recipe.sourceImages.length === 0) return null;
-  return (
-    <section aria-labelledby="original" className="flex flex-col gap-4">
-      <h2 id="original" className="text-2xl">
-        The original
-      </h2>
-      {recipe.sourceImages.map((image, i) => (
-        <figure key={image.id} className="flex flex-col gap-2">
-          {/* Signed, short-lived URLs: skip Next's image optimiser, which
-              would cache private photos under URLs that change anyway. */}
-          <Image
-            src={image.url}
-            alt={
-              image.caption ??
-              `Photo ${i + 1} of the original recipe card for ${recipe.title}`
-            }
-            width={image.width}
-            height={image.height}
-            unoptimized
-            className="h-auto w-full rounded-card border border-line bg-card"
-          />
-          {image.caption && (
-            <figcaption className="text-ink-muted">{image.caption}</figcaption>
-          )}
-        </figure>
-      ))}
-    </section>
-  );
-}
-
 async function AdminTools({ recipeId }: { recipeId: string }) {
   const user = await getCurrentUser();
   if (user.role !== "admin") return null;
-  return <SourceImageUploader recipeId={recipeId} />;
+  return (
+    <>
+      <Link
+        href={`/recipes/${recipeId}/edit`}
+        className="inline-flex min-h-tap items-center justify-center self-start rounded-control border-2 border-ink bg-card px-5 font-semibold text-ink no-underline hover:bg-paper hover:text-ink"
+      >
+        Edit this recipe
+      </Link>
+      <SourceImageUploader recipeId={recipeId} />
+    </>
+  );
 }
 
 function Ingredients({ lines }: { lines: RecipeLine[] }) {
