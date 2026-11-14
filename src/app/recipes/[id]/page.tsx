@@ -10,7 +10,9 @@ export const metadata: Metadata = { title: "Recipe · Family Cookbook" };
 export default function RecipePage({ params }: PageProps<"/recipes/[id]">) {
   return (
     <PageLayout width="form">
-      <Suspense fallback={<p className="text-ink-muted">Loading the recipe…</p>}>
+      <Suspense
+        fallback={<p className="text-ink-muted">Loading the recipe…</p>}
+      >
         <RecipeDetails params={params} />
       </Suspense>
     </PageLayout>
@@ -61,7 +63,9 @@ async function RecipeDetails({ params }: { params: Promise<{ id: string }> }) {
           <h2 id="story" className="text-2xl">
             The story
           </h2>
-          <p className="font-heading text-lg whitespace-pre-line">{recipe.story}</p>
+          <p className="font-heading text-lg whitespace-pre-line">
+            {recipe.story}
+          </p>
         </section>
       )}
     </article>
@@ -72,10 +76,12 @@ function Ingredients({ lines }: { lines: RecipeLine[] }) {
   return (
     <div className="flex flex-col gap-4">
       {toSections(lines).map((section, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: static list from the saved recipe, never reordered or edited in place
         <div key={i} className="flex flex-col gap-1">
           {section.heading && <h3 className="text-lg">{section.heading}</h3>}
           <ul className="list-disc space-y-1 pl-6 marker:text-ink-muted">
             {section.items.map((item, j) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: static list from the saved recipe, never reordered or edited in place
               <li key={j}>{item}</li>
             ))}
           </ul>
@@ -96,10 +102,15 @@ function Method({ lines }: { lines: RecipeLine[] }) {
       {sections.map((section, i) => {
         const start = starts[i];
         return (
+          // biome-ignore lint/suspicious/noArrayIndexKey: static list from the saved recipe, never reordered or edited in place
           <div key={i} className="flex flex-col gap-1">
             {section.heading && <h3 className="text-lg">{section.heading}</h3>}
-            <ol start={start} className="list-decimal space-y-3 pl-7 marker:font-semibold">
+            <ol
+              start={start}
+              className="list-decimal space-y-3 pl-7 marker:font-semibold"
+            >
               {section.items.map((item, j) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: static list from the saved recipe, never reordered or edited in place
                 <li key={j} className="pl-1">
                   {item}
                 </li>

@@ -14,7 +14,9 @@ export async function sendCode(
   _prev: SignInState,
   formData: FormData,
 ): Promise<SignInState> {
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const email = String(formData.get("email") ?? "")
+    .trim()
+    .toLowerCase();
   const resend = formData.get("resend") === "1";
 
   if (!EMAIL_PATTERN.test(email)) {
@@ -50,7 +52,9 @@ export async function verifyCode(
   _prev: SignInState,
   formData: FormData,
 ): Promise<SignInState> {
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const email = String(formData.get("email") ?? "")
+    .trim()
+    .toLowerCase();
   // Strip spaces and dashes so a pasted "123 456" or "1234-5678" still works.
   const token = String(formData.get("code") ?? "").replace(/[\s-]/g, "");
 

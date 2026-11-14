@@ -53,7 +53,8 @@ async function Account() {
   return (
     <div className="flex w-full min-w-0 items-center justify-between gap-3 text-sm sm:w-auto sm:justify-end">
       <span className="min-w-0 truncate text-ink-muted">
-        Signed in as <strong className="text-ink">{user.name ?? user.email}</strong>
+        Signed in as{" "}
+        <strong className="text-ink">{user.name ?? user.email}</strong>
       </span>
       <form action={signOut} className="shrink-0">
         <Button type="submit" variant="secondary" className="whitespace-nowrap">

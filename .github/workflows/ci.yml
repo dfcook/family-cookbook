@@ -21,7 +21,8 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm lint
+      - name: Lint and format check (Biome)
+        run: pnpm exec biome ci
       - run: pnpm typecheck
       - run: pnpm test
 

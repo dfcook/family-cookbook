@@ -33,7 +33,11 @@ function FieldFrame({ label, hint, error, children }: FieldFrameProps) {
       )}
       {children({ id, describedBy })}
       {error && (
-        <p id={errorId} role="alert" className="text-lg font-semibold text-danger">
+        <p
+          id={errorId}
+          role="alert"
+          className="text-lg font-semibold text-danger"
+        >
           {error}
         </p>
       )}
@@ -47,7 +51,13 @@ type TextFieldProps = Omit<ComponentProps<"input">, "id"> & {
   error?: string;
 };
 
-export function TextField({ label, hint, error, className, ...props }: TextFieldProps) {
+export function TextField({
+  label,
+  hint,
+  error,
+  className,
+  ...props
+}: TextFieldProps) {
   return (
     <FieldFrame label={label} hint={hint} error={error}>
       {({ id, describedBy }) => (

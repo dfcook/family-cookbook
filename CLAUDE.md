@@ -6,7 +6,8 @@ Private family recipe archive (Next.js + Supabase). Product spec: `family-cookbo
 
 ## Commands
 
-- `pnpm lint`, `pnpm typecheck`, `pnpm test` (Vitest), `pnpm test:e2e` (Playwright)
+- `pnpm lint` (Biome lint + format check), `pnpm format` (Biome fixes and formats), `pnpm typecheck`, `pnpm test` (Vitest), `pnpm test:e2e` (Playwright)
+- Run `pnpm format` before committing; CI fails on unformatted code. Unsorted Tailwind classes are fixed by `pnpm format:classes`
 - `pnpm db:start` / `pnpm db:reset` for local Supabase (needs Docker); `pnpm db:migration <name>` for schema changes
 - Schema changes are always Supabase migrations
 

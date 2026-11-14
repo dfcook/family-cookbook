@@ -22,7 +22,11 @@ async function AdminOnly() {
   return (
     <>
       <h1 className="text-3xl">Add a recipe</h1>
-      <RecipeForm action={createRecipe} submitLabel="Save recipe" cancelHref="/" />
+      <RecipeForm
+        action={createRecipe}
+        submitLabel="Save recipe"
+        cancelHref="/"
+      />
     </>
   );
 }

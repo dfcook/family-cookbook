@@ -11,7 +11,9 @@ describe("parseLines", () => {
   });
 
   test("a line ending in a colon is a heading", () => {
-    expect(parseLines("For the pastry:\n200g flour\nFor the filling:\n3 apples")).toEqual([
+    expect(
+      parseLines("For the pastry:\n200g flour\nFor the filling:\n3 apples"),
+    ).toEqual([
       { type: "heading", text: "For the pastry" },
       { type: "item", text: "200g flour" },
       { type: "heading", text: "For the filling" },

@@ -18,7 +18,13 @@ export type RecipeFormState = {
   errors: Partial<Record<keyof RecipeFormValues | "form", string>>;
 };
 
-const LIMITS = { title: 200, notes: 20_000, story: 20_000, ingredients: 20_000, method: 20_000 };
+const LIMITS = {
+  title: 200,
+  notes: 20_000,
+  story: 20_000,
+  ingredients: 20_000,
+  method: 20_000,
+};
 
 function readValues(formData: FormData): RecipeFormValues {
   const field = (name: string) => String(formData.get(name) ?? "");
@@ -34,9 +40,13 @@ function readValues(formData: FormData): RecipeFormValues {
 function validate(values: RecipeFormValues): RecipeFormState["errors"] {
   const errors: RecipeFormState["errors"] = {};
   if (!values.title) errors.title = "Please give the recipe a name.";
-  for (const [name, max] of Object.entries(LIMITS) as [keyof RecipeFormValues, number][]) {
+  for (const [name, max] of Object.entries(LIMITS) as [
+    keyof RecipeFormValues,
+    number,
+  ][]) {
     if (!errors[name] && values[name].length > max) {
-      errors[name] = `This is too long: please keep it under ${max.toLocaleString("en-GB")} characters.`;
+      errors[name] =
+        `This is too long: please keep it under ${max.toLocaleString("en-GB")} characters.`;
     }
   }
   return errors;
@@ -71,7 +81,9 @@ export async function createRecipe(
     console.error("createRecipe failed", error?.code, error?.message);
     return {
       values,
-      errors: { form: "Sorry, the recipe couldn't be saved. Please try again." },
+      errors: {
+        form: "Sorry, the recipe couldn't be saved. Please try again.",
+      },
     };
   }
 

@@ -18,15 +18,21 @@ describe("TextField", () => {
     );
     const input = screen.getByLabelText("Sign-in code");
     expect(input.getAttribute("aria-invalid")).toBe("true");
-    const describedBy = input.getAttribute("aria-describedby")!.split(" ");
-    const descriptions = describedBy.map((id) => document.getElementById(id)?.textContent);
+    const describedBy = (input.getAttribute("aria-describedby") ?? "").split(
+      " ",
+    );
+    const descriptions = describedBy.map(
+      (id) => document.getElementById(id)?.textContent,
+    );
     expect(descriptions).toEqual(["Check your email", "That code didn't work"]);
     expect(screen.getByRole("alert").textContent).toBe("That code didn't work");
   });
 
   test("without an error, it isn't marked invalid and has no alert", () => {
     render(<TextField label="Name" />);
-    expect(screen.getByLabelText("Name").hasAttribute("aria-invalid")).toBe(false);
+    expect(screen.getByLabelText("Name").hasAttribute("aria-invalid")).toBe(
+      false,
+    );
     expect(screen.queryByRole("alert")).toBeNull();
   });
 });

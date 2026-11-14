@@ -67,7 +67,7 @@ test("an email not on the allowlist gets no code and no hint either way", async 
   await page.goto("/sign-in");
   await requestCode(page, email);
   await expect(page.getByRole("status")).toContainText(
-    "If " + email + " is on the family list",
+    `If ${email} is on the family list`,
   );
 
   await page.getByLabel("Sign-in code").fill("123456");
@@ -115,16 +115,16 @@ test("a signed-in user without a profile sees a clear message, not a loop", asyn
   await expect(page).toHaveURL(/\/sign-in$/);
 });
 
-test("a code pasted with a space in it still works", async ({
-  page,
-}) => {
+test("a code pasted with a space in it still works", async ({ page }) => {
   const email = uniqueEmail("spaced-code");
   await allowEmail(email);
 
   await page.goto("/sign-in");
   await requestCode(page, email);
   const code = await getSignInCode(email);
-  await page.getByLabel("Sign-in code").fill(`${code.slice(0, 3)} ${code.slice(3)}`);
+  await page
+    .getByLabel("Sign-in code")
+    .fill(`${code.slice(0, 3)} ${code.slice(3)}`);
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByText(`Signed in as ${email}`)).toBeVisible();
 });

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { type Page, expect } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 
 type Role = "admin" | "contributor" | "reader";
@@ -39,9 +39,9 @@ type MailpitMessage = { ID: string; To: { Address: string }[] };
  * delivery right after the stack starts.
  */
 export async function emailsTo(email: string): Promise<MailpitMessage[]> {
-  const list = await fetch(`${env("MAILPIT_URL")}/api/v1/messages?limit=500`).then(
-    (r) => r.json() as Promise<{ messages: MailpitMessage[] }>,
-  );
+  const list = await fetch(
+    `${env("MAILPIT_URL")}/api/v1/messages?limit=500`,
+  ).then((r) => r.json() as Promise<{ messages: MailpitMessage[] }>);
   return list.messages.filter((m) =>
     m.To.some((to) => to.Address.toLowerCase() === email.toLowerCase()),
   );
@@ -66,7 +66,8 @@ export async function getSignInCode(email: string): Promise<string> {
     )
     .toBeTruthy();
 
-  return code!;
+  if (!code) throw new Error(`No sign-in code found for ${email}`);
+  return code;
 }
 
 export async function countEmailsTo(email: string): Promise<number> {
@@ -88,7 +89,9 @@ export async function signIn(page: Page, email: string) {
   await expect(page.getByText(`Signed in as ${email}`)).toBeVisible();
 }
 
-export async function getProfileRole(email: string): Promise<string | undefined> {
+export async function getProfileRole(
+  email: string,
+): Promise<string | undefined> {
   const { data, error } = await adminClient()
     .from("profiles")
     .select("role")
@@ -100,7 +103,10 @@ export async function getProfileRole(email: string): Promise<string | undefined>
 
 /** Simulates someone whose access was removed after they signed in. */
 export async function deleteProfile(email: string) {
-  const { error } = await adminClient().from("profiles").delete().eq("email", email);
+  const { error } = await adminClient()
+    .from("profiles")
+    .delete()
+    .eq("email", email);
   if (error) throw error;
 }
 
