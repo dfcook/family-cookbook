@@ -51,10 +51,16 @@ export async function verifyCode(
   formData: FormData,
 ): Promise<SignInState> {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  const token = String(formData.get("code") ?? "").replace(/\s/g, "");
+  // Strip spaces and dashes so a pasted "123 456" or "1234-5678" still works.
+  const token = String(formData.get("code") ?? "").replace(/[\s-]/g, "");
 
-  if (!/^\d{6}$/.test(token)) {
-    return { step: "code", email, error: "The code is 6 numbers." };
+  // Supabase can be set to send 6 to 10 digit codes, so accept any of those.
+  if (!/^\d{6,10}$/.test(token)) {
+    return {
+      step: "code",
+      email,
+      error: "Please type the code from the email, using numbers only.",
+    };
   }
 
   const supabase = await createClient();

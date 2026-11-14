@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import {
   allowEmail,
   countEmailsTo,
+  deleteProfile,
   getProfileRole,
   getSignInCode,
   requestCode,
@@ -96,4 +97,34 @@ test("a new user's role comes from the allowlist", async ({ page }) => {
 
   await signIn(page, email);
   expect(await getProfileRole(email)).toBe("admin");
+});
+
+test("a signed-in user without a profile sees a clear message, not a loop", async ({
+  page,
+}) => {
+  const email = uniqueEmail("no-profile");
+  await allowEmail(email);
+  await signIn(page, email);
+
+  await deleteProfile(email);
+  await page.goto("/");
+  await expect(page).toHaveURL(/\/no-access$/);
+  await expect(page.getByText("doesn't have access")).toBeVisible();
+
+  await page.getByRole("button", { name: "Sign out" }).click();
+  await expect(page).toHaveURL(/\/sign-in$/);
+});
+
+test("a code pasted with a space in it still works", async ({
+  page,
+}) => {
+  const email = uniqueEmail("spaced-code");
+  await allowEmail(email);
+
+  await page.goto("/sign-in");
+  await requestCode(page, email);
+  const code = await getSignInCode(email);
+  await page.getByLabel("Sign-in code").fill(`${code.slice(0, 3)} ${code.slice(3)}`);
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page.getByText(`Signed in as ${email}`)).toBeVisible();
 });

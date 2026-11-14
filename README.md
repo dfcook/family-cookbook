@@ -67,8 +67,8 @@ CI runs all of these on every push and pull request, with Playwright running aga
 
 ### One-time setup
 
-1. **Supabase:** create a project. Note its project ref, database password and API URL and publishable key.
-2. **Vercel:** import this repo, then add environment variables for Production and Preview:
+1. **Supabase:** create a project. Note its project ref, database password, **project URL** (`https://<ref>.supabase.co`, with no `/rest/v1` on the end) and publishable key (`sb_publishable_…`).
+2. **Vercel:** import this repo, then add environment variables for Production and Preview, with type **Config** (both values are safe to be public; Vercel won't allow a `NEXT_PUBLIC_` variable to be a Secret). Redeploy after changing them, because they're built into the app:
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 3. **GitHub** (Settings → Secrets and variables → Actions):
@@ -83,7 +83,7 @@ Local settings live in `supabase/config.toml`; the hosted project needs the same
 
 1. **Authentication → Hooks → Before User Created:** enable it as a Postgres function, `public.hook_before_user_created`.
 2. **Authentication → Emails → Templates:** for both **Magic link** and **Confirm signup**, set the subject to `Your Family Cookbook sign-in code` and the body to the contents of [supabase/templates/sign-in-code.html](supabase/templates/sign-in-code.html). The body must contain `{{ .Token }}`, which is the code.
-3. **Authentication → Sign In / Providers:** keep **Allow new users to sign up** on (the hook and allowlist decide who actually can) and leave the **Email** provider enabled.
+3. **Authentication → Sign In / Providers:** keep **Allow new users to sign up** on (the hook and allowlist decide who actually can), leave the **Email** provider enabled, and set **Email OTP Length** to `6` to match local development. The app accepts 6 to 10 digits either way.
 4. **Authentication → URL Configuration:** set **Site URL** to the production URL.
 5. **SQL editor:** add your own email to the allowlist as `admin`.
 6. **Email delivery:** Supabase's built-in email service only sends to members of the Supabase project team and is heavily rate-limited. Before inviting family, set up custom SMTP under **Authentication → Emails → SMTP settings** (for example with Resend's free tier).

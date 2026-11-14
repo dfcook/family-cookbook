@@ -28,7 +28,9 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser> => {
     .select("id, email, name, role")
     .eq("id", userId)
     .single();
-  if (!profile) redirect("/sign-in");
+  // Signed in but no profile (e.g. removed from the family list): show a
+  // clear page rather than bouncing between home and sign-in.
+  if (!profile) redirect("/no-access");
 
   return profile as CurrentUser;
 });

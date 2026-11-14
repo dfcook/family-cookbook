@@ -97,3 +97,9 @@ export async function getProfileRole(email: string): Promise<string | undefined>
   if (error) throw error;
   return data?.role;
 }
+
+/** Simulates someone whose access was removed after they signed in. */
+export async function deleteProfile(email: string) {
+  const { error } = await adminClient().from("profiles").delete().eq("email", email);
+  if (error) throw error;
+}
